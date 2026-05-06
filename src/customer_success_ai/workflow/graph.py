@@ -4,8 +4,10 @@ from pathlib import Path
 
 from langgraph.graph import END, StateGraph
 
-from customer_success_ai.mocks.loader import load_kb_docs, load_tickets_history
+from customer_success_ai.mocks.loader import load_tickets_history
 from customer_success_ai.observability import JsonlLogger, StepTimer
+from customer_success_ai.rag.retriever import retrieve_context
+from customer_success_ai.triage.router import triage_ticket
 from customer_success_ai.workflow.state import WorkflowState
 
 
@@ -16,32 +18,52 @@ def _count_open_tickets_for_customer(history: list[dict], customer_id: str) -> i
 
 def _node_consult_mocks(state: WorkflowState, *, logger: JsonlLogger, kb_dir: Path, history_path: Path) -> WorkflowState:
     with StepTimer(logger, "consult_mocks"):
-        kb_docs = load_kb_docs(kb_dir)
         history = load_tickets_history(history_path)
         open_count = _count_open_tickets_for_customer(history, state.ticket["id_cliente"])
 
         state.open_tickets_for_customer = open_count
-        state.is_sensitive = open_count > 0  # refinamos a regra (top N/limiar) quando definirmos
-
-        state.consulted_sources = [
-            {"source": "kb_markdown", "items": len(kb_docs), "path": str(kb_dir.as_posix())},
-            {"source": "tickets_json", "items": len(history), "path": str(history_path.as_posix())},
-        ]
-        logger.log(
-            "sources_consulted",
-            sources=state.consulted_sources,
-            open_tickets_for_customer=open_count,
-            customer_id=state.ticket["id_cliente"],
-        )
-
-        state.draft = (
-            f"Ticket {state.ticket['id']} ({state.ticket['tipo']}): {state.ticket['titulo']}\n"
-            f"Cliente: {state.ticket['nome_cliente']} ({state.ticket['id_cliente']})\n"
-            f"Resumo: {state.ticket['descricao']}\n\n"
-            "Contexto: fontes consultadas registradas no log.\n"
-        )
-        state.requires_human_review = state.is_sensitive
+        # Regra inicial (provisória): sensível quando o cliente possui qualquer ticket vivo.
+        # Quando definirmos "top N / limiar X", substituímos aqui.
+        state.is_sensitive = open_count > 0
         return state
+
+
+def _node_triage(state: WorkflowState, *, logger: JsonlLogger) -> WorkflowState:
+    result = triage_ticket(state.ticket, logger=logger)
+    state.triage = result
+    return state
+
+
+def _node_rag_and_draft(state: WorkflowState, *, logger: JsonlLogger, kb_dir: Path, history_path: Path) -> WorkflowState:
+    docs, citations = retrieve_context(state.ticket, kb_dir=kb_dir, history_path=history_path, logger=logger)
+    state.citations = [c.__dict__ for c in citations]
+
+    # Confiança simples: usa a confiança da triagem quando existir, senão 0.5.
+    state.confidence = state.triage.confidence if state.triage else 0.5
+    state.requires_human_review = state.is_sensitive or state.confidence < 0.6
+
+    triage_line = ""
+    if state.triage:
+        triage_line = f"Triagem: {state.triage.category} | Urgência: {state.triage.urgency} | Confiança: {state.triage.confidence:.2f}\n"
+
+    sources_text = "\n".join(
+        f"- [{c.source}] {c.ref}" + (f" ({c.path})" if c.path else "") for c in citations
+    )
+
+    state.draft = (
+        f"{triage_line}"
+        f"Ticket {state.ticket['id']} ({state.ticket['tipo']}): {state.ticket['titulo']}\n"
+        f"Cliente: {state.ticket['nome_cliente']} ({state.ticket['id_cliente']})\n"
+        f"Resumo: {state.ticket['descricao']}\n\n"
+        "Resposta sugerida (rascunho):\n"
+        "- Validar a divergência no extrato e solicitar evidências (print/linha do extrato).\n"
+        "- Conferir cobranças/conciliação e, se aplicável, orientar sobre reembolso/ajuste.\n\n"
+        "Fontes consultadas (citações):\n"
+        f"{sources_text}\n\n"
+        f"Confiança: {state.confidence:.2f}\n"
+        f"Requer revisão humana: {'SIM' if state.requires_human_review else 'NÃO'}\n"
+    )
+    return state
 
 
 def _node_hil(state: WorkflowState, *, logger: JsonlLogger) -> WorkflowState:
@@ -79,6 +101,8 @@ def build_workflow_graph(
 ):
     g = StateGraph(WorkflowState)
     g.add_node("consult_mocks", lambda s: _node_consult_mocks(s, logger=logger, kb_dir=kb_dir, history_path=history_path))
+    g.add_node("triage", lambda s: _node_triage(s, logger=logger))
+    g.add_node("rag_and_draft", lambda s: _node_rag_and_draft(s, logger=logger, kb_dir=kb_dir, history_path=history_path))
 
     def hil_node(s: WorkflowState) -> WorkflowState:
         if hil_mode == "interactive":
@@ -94,7 +118,9 @@ def build_workflow_graph(
 
     g.add_node("hil", hil_node)
     g.set_entry_point("consult_mocks")
-    g.add_edge("consult_mocks", "hil")
+    g.add_edge("consult_mocks", "triage")
+    g.add_edge("triage", "rag_and_draft")
+    g.add_edge("rag_and_draft", "hil")
     g.add_edge("hil", END)
     return g.compile()
 

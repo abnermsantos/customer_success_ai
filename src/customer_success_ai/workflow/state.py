@@ -3,6 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Literal, TypedDict
 
+from customer_success_ai.triage.models import TriageResult
+
 
 class Ticket(TypedDict):
     id: str
@@ -27,7 +29,10 @@ class WorkflowState:
     open_tickets_for_customer: int = 0
     is_sensitive: bool = False
     consulted_sources: list[dict[str, Any]] = field(default_factory=list)
+    triage: TriageResult | None = None
     draft: str = ""
+    citations: list[dict[str, Any]] = field(default_factory=list)
+    confidence: float = 0.0
     requires_human_review: bool = False
     hil_decision: HILDecision | None = None
     hil_correction: str | None = None

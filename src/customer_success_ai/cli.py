@@ -26,6 +26,7 @@ def _load_config() -> AppConfig:
         mocks_dir=mocks_dir,
         tickets_history_path=tickets_history_path,
         kb_dir=kb_dir,
+        openai_api_key=os.getenv("OPENAI_API_KEY"),
     )
 
 

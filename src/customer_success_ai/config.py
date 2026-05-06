@@ -11,4 +11,5 @@ class AppConfig:
     mocks_dir: Path
     tickets_history_path: Path
     kb_dir: Path
+    openai_api_key: str | None
 
