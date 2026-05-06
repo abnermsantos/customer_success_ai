@@ -1,12 +1,15 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 
 from langgraph.graph import END, StateGraph
 
 from customer_success_ai.mocks.loader import load_tickets_history
 from customer_success_ai.observability import JsonlLogger, StepTimer
 from customer_success_ai.rag.retriever import retrieve_context
+from customer_success_ai.agents.kb_generator import generate_kb_article
 from customer_success_ai.agents.specialists import run_specialist
 from customer_success_ai.triage.router import triage_ticket
 from customer_success_ai.workflow.state import WorkflowState
@@ -153,6 +156,97 @@ def _node_hil(state: WorkflowState, *, logger: JsonlLogger) -> WorkflowState:
         return state
 
 
+def _route_after_hil(state: WorkflowState) -> str | object:
+    """Só segue para oferta de KB se o analista aprovou o rascunho da resposta."""
+    if state.hil_decision != "aprovar":
+        return END
+    return "hil_kb_offer"
+
+
+def _node_hil_kb_offer(
+    state: WorkflowState,
+    *,
+    logger: JsonlLogger,
+    non_interactive: bool,
+    kb_offer: str | None,
+) -> WorkflowState:
+    with StepTimer(logger, "hil_kb_offer"):
+        if not non_interactive:
+            while True:
+                choice = input(
+                    "\nDeseja gerar documentação para a base de conhecimento "
+                    "(como finalizar este tipo de ticket)? [s]im / [n]ão: "
+                ).strip().lower()
+                if choice in ("s", "sim", "y", "yes"):
+                    state.kb_generate_requested = True
+                    break
+                if choice in ("n", "não", "nao", "no"):
+                    state.kb_generate_requested = False
+                    break
+                print("Digite sim ou não (s ou n).")
+        else:
+            state.kb_generate_requested = kb_offer == "sim"
+        logger.log(
+            "kb_offer_answer",
+            requested=state.kb_generate_requested,
+            mode="non_interactive" if non_interactive else "interactive",
+        )
+    return state
+
+
+def _route_after_kb_offer(state: WorkflowState) -> str | object:
+    if state.kb_generate_requested:
+        return "kb_generator"
+    return END
+
+
+def _node_kb_generator(state: WorkflowState, *, logger: JsonlLogger) -> WorkflowState:
+    try:
+        state.kb_article_markdown = generate_kb_article(state, logger=logger)
+    except Exception as e:
+        logger.log("kb_generation_failed", error=str(e), ticket_id=state.ticket["id"])
+        state.kb_article_markdown = (
+            "---\nid: KB-ERRO\ntitle: \"Falha ao gerar rascunho de KB\"\n"
+            "category: técnica\ntags: [kb, erro, geracao]\nmodule: sistema\naudience: interno\n---\n\n"
+            f"# Falha ao gerar artigo\n\n```\n{e}\n```\n\nRejeitar este rascunho e tentar novamente.\n"
+        )
+    return state
+
+
+def _node_hil_kb_validate(
+    state: WorkflowState,
+    *,
+    logger: JsonlLogger,
+    non_interactive: bool,
+    kb_validate: str | None,
+) -> WorkflowState:
+    with StepTimer(logger, "hil_kb_validate"):
+        md = state.kb_article_markdown or ""
+        print("\n=== RASCUNHO DE ARTIGO PARA KB (validação humana) ===")
+        print(md)
+        print("=== FIM DO ARTIGO ===\n")
+
+        if not non_interactive:
+            while True:
+                choice = input("Validação do artigo KB — [a]provar uso/publicação ou [r]ejeitar rascunho: ").strip().lower()
+                if choice in ("a", "aprovar"):
+                    state.kb_validation_decision = "aprovar"
+                    break
+                if choice in ("r", "rejeitar"):
+                    state.kb_validation_decision = "rejeitar"
+                    break
+                print("Opção inválida. Escolha a ou r.")
+        else:
+            val = kb_validate if kb_validate in ("aprovar", "rejeitar") else "aprovar"
+            state.kb_validation_decision = val  # type: ignore[assignment]
+            logger.log("kb_human_validation", decision=val, mode="non_interactive")
+            return state
+
+        logger.log("kb_human_validation", decision=state.kb_validation_decision, mode="interactive")
+
+    return state
+
+
 def build_workflow_graph(
     *,
     logger: JsonlLogger,
@@ -165,12 +259,17 @@ def build_workflow_graph(
     g.add_node("consult_mocks", lambda s: _node_consult_mocks(s, logger=logger, kb_dir=kb_dir, history_path=history_path))
     g.add_node("triage", lambda s: _node_triage(s, logger=logger))
     g.add_node("human_direct", lambda s: _node_human_direct(s, logger=logger))
-    g.add_node("rag_and_draft", lambda s: _node_rag_and_draft(s, logger=logger, kb_dir=kb_dir, history_path=history_path))
+    g.add_node(
+        "rag_and_draft",
+        lambda s: _node_rag_and_draft(s, logger=logger, kb_dir=kb_dir, load_history=load_history),
+    )
     g.add_node("worker_tecnica", lambda s: _node_worker(s, logger=logger))
     g.add_node("worker_comercial", lambda s: _node_worker(s, logger=logger))
     g.add_node("worker_financeira", lambda s: _node_worker(s, logger=logger))
     g.add_node("worker_escalacao", lambda s: _node_worker(s, logger=logger))
     g.add_node("worker_default", lambda s: _node_worker(s, logger=logger))
+
+    non_interactive = hil_mode != "interactive"
 
     def hil_node(s: WorkflowState) -> WorkflowState:
         if hil_mode == "interactive":
@@ -184,7 +283,27 @@ def build_workflow_graph(
             logger.log("hil_decision", decision=s.hil_decision, correction=s.hil_correction, mode="non_interactive")
             return s
 
+    def kb_offer_node(s: WorkflowState) -> WorkflowState:
+        return _node_hil_kb_offer(s, logger=logger, non_interactive=non_interactive, kb_offer=kb_offer)
+
+    def kb_gen_node(s: WorkflowState) -> WorkflowState:
+        return _node_kb_generator(s, logger=logger)
+
+    def kb_validate_node(s: WorkflowState) -> WorkflowState:
+        kb_val = kb_validate
+        if non_interactive and kb_offer == "sim" and kb_val is None:
+            kb_val = "aprovar"
+        return _node_hil_kb_validate(
+            s,
+            logger=logger,
+            non_interactive=non_interactive,
+            kb_validate=kb_val,
+        )
+
     g.add_node("hil", hil_node)
+    g.add_node("hil_kb_offer", kb_offer_node)
+    g.add_node("kb_generator", kb_gen_node)
+    g.add_node("hil_kb_validate", kb_validate_node)
     g.set_entry_point("consult_mocks")
     g.add_edge("consult_mocks", "triage")
     g.add_conditional_edges("triage", _route_after_triage)
@@ -195,6 +314,9 @@ def build_workflow_graph(
     g.add_edge("worker_financeira", "hil")
     g.add_edge("worker_escalacao", "hil")
     g.add_edge("worker_default", "hil")
-    g.add_edge("hil", END)
+    g.add_conditional_edges("hil", _route_after_hil)
+    g.add_conditional_edges("hil_kb_offer", _route_after_kb_offer)
+    g.add_edge("kb_generator", "hil_kb_validate")
+    g.add_edge("hil_kb_validate", END)
     return g.compile()
 

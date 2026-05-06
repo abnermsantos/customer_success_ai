@@ -21,6 +21,7 @@ class Ticket(TypedDict):
 
 
 HILDecision = Literal["aprovar", "rejeitar", "corrigir"]
+KBValidationDecision = Literal["aprovar", "rejeitar"]
 
 
 @dataclass
@@ -38,4 +39,7 @@ class WorkflowState:
     requires_human_review: bool = False
     hil_decision: HILDecision | None = None
     hil_correction: str | None = None
+    kb_generate_requested: bool | None = None
+    kb_article_markdown: str | None = None
+    kb_validation_decision: KBValidationDecision | None = None
 

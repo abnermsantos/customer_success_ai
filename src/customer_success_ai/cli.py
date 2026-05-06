@@ -73,13 +73,21 @@ def run() -> int:
 
     with StepTimer(logger, "shutdown"):
         hil_decision = result["hil_decision"] if isinstance(result, dict) else result.hil_decision
+        kb_req = result.get("kb_generate_requested") if isinstance(result, dict) else result.kb_generate_requested
+        kb_val = result.get("kb_validation_decision") if isinstance(result, dict) else result.kb_validation_decision
         logger.log(
             "run_end",
             status="ok",
             hil_decision=hil_decision,
+            kb_generate_requested=kb_req,
+            kb_validation_decision=kb_val,
         )
         print(f"\nFinalizado. thread_id={thread_id}")
         print(f"Decisão HIL: {hil_decision}")
+        if kb_req is not None:
+            print(f"Geração KB solicitada: {'sim' if kb_req else 'não'}")
+        if kb_val is not None:
+            print(f"Validação KB (humano): {kb_val}")
         print(f"Log: {log_path}")
 
     return 0
@@ -96,6 +104,18 @@ def main(argv: list[str] | None = None) -> int:
         help="Modo de HIL (interactive ou decisão direta)",
     )
     p_run.add_argument("--correcao", default="", help="Texto de correção quando --hil=corrigir")
+    p_run.add_argument(
+        "--gerar-kb",
+        choices=["sim", "nao"],
+        default=None,
+        help="Somente modo não-interativo com --hil=aprovar: sim/nao gera artefato de KB after HIL.",
+    )
+    p_run.add_argument(
+        "--validar-kb",
+        choices=["aprovar", "rejeitar"],
+        default=None,
+        help="Somente modo não-interativo com --gerar-kb=sim: decisão na validação do artigo KB.",
+    )
 
     args = parser.parse_args(argv)
     if args.cmd in (None, "run"):
@@ -127,12 +147,27 @@ def main(argv: list[str] | None = None) -> int:
             kb_dir=config.kb_dir,
             history_path=config.tickets_history_path,
             hil_mode=args.hil,
-            hil_correction=args.correcao,
+            hil_correction=args.correcao if args.correcao else None,
+            kb_offer=args.gerar_kb,
+            kb_validate=args.validar_kb,
         )
         state = WorkflowState(ticket=ticket)
         result = graph.invoke(state)
         hil_decision = result["hil_decision"] if isinstance(result, dict) else result.hil_decision
+        kb_req = result["kb_generate_requested"] if isinstance(result, dict) else result.kb_generate_requested
+        kb_val = result["kb_validation_decision"] if isinstance(result, dict) else result.kb_validation_decision
         print(f"Finalizado. Decisão HIL: {hil_decision}")
+        if kb_req is not None:
+            print(f"Geração KB solicitada: {'sim' if kb_req else 'não'}")
+        if kb_val is not None:
+            print(f"Validação KB (humano): {kb_val}")
+        logger.log(
+            "run_end",
+            status="ok",
+            hil_decision=hil_decision,
+            kb_generate_requested=kb_req,
+            kb_validation_decision=kb_val,
+        )
         print(f"Log: {log_path}")
         return 0
 
