@@ -5,7 +5,10 @@ from typing import Literal
 
 
 TicketCategory = Literal["técnica", "comercial", "financeira", "escalação"]
-Urgency = Literal["baixo", "médio", "alto", "crítico"]
+# 1 = mais urgente, 4 = menos urgente (alinhado ao prompt do classificador)
+Urgency = Literal[1, 2, 3, 4]
+
+ALLOWED_CATEGORIES: frozenset[str] = frozenset({"técnica", "comercial", "financeira", "escalação"})
 
 
 @dataclass(frozen=True)

@@ -30,9 +30,11 @@ class WorkflowState:
     is_sensitive: bool = False
     consulted_sources: list[dict[str, Any]] = field(default_factory=list)
     triage: TriageResult | None = None
+    classification_error: str | None = None
     draft: str = ""
     citations: list[dict[str, Any]] = field(default_factory=list)
     confidence: float = 0.0
+    specialist: str | None = None
     requires_human_review: bool = False
     hil_decision: HILDecision | None = None
     hil_correction: str | None = None

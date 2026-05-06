@@ -7,6 +7,7 @@ from langgraph.graph import END, StateGraph
 from customer_success_ai.mocks.loader import load_tickets_history
 from customer_success_ai.observability import JsonlLogger, StepTimer
 from customer_success_ai.rag.retriever import retrieve_context
+from customer_success_ai.agents.specialists import run_specialist
 from customer_success_ai.triage.router import triage_ticket
 from customer_success_ai.workflow.state import WorkflowState
 
@@ -29,41 +30,102 @@ def _node_consult_mocks(state: WorkflowState, *, logger: JsonlLogger, kb_dir: Pa
 
 
 def _node_triage(state: WorkflowState, *, logger: JsonlLogger) -> WorkflowState:
-    result = triage_ticket(state.ticket, logger=logger)
-    state.triage = result
+    result, err = triage_ticket(state.ticket, logger=logger)
+    if err:
+        state.triage = None
+        state.classification_error = err
+    else:
+        state.triage = result
+        state.classification_error = None
+    return state
+
+
+def _route_after_triage(state: WorkflowState) -> str:
+    """Tickets não classificáveis não passam por RAG/workers para evitar ciclos e desperdício."""
+    if state.triage is None or state.classification_error:
+        return "human_direct"
+    return "rag_and_draft"
+
+
+def _node_human_direct(state: WorkflowState, *, logger: JsonlLogger) -> WorkflowState:
+    with StepTimer(logger, "human_direct"):
+        reason = state.classification_error or "Classificação indisponível."
+        logger.log("route_human_direct", reason=reason, ticket_id=state.ticket["id"])
+        state.specialist = None
+        state.citations = []
+        state.confidence = 0.0
+        state.requires_human_review = True
+        state.draft = (
+            "CLASSIFICAÇÃO AUTOMÁTICA INDISPONÍVEL\n\n"
+            f"Mensagem técnica: {reason}\n\n"
+            f"Ticket {state.ticket['id']} ({state.ticket['tipo']}): {state.ticket['titulo']}\n"
+            f"Cliente: {state.ticket['nome_cliente']} ({state.ticket['id_cliente']})\n"
+            f"Resumo: {state.ticket['descricao']}\n\n"
+            "O sistema não atribuiu este ticket a nenhum agente especialista. "
+            "Conduza a triagem e a resposta manualmente.\n\n"
+            f"Tickets vivos do cliente: {state.open_tickets_for_customer}\n"
+            f"Requer revisão humana: SIM\n"
+        )
     return state
 
 
 def _node_rag_and_draft(state: WorkflowState, *, logger: JsonlLogger, kb_dir: Path, history_path: Path) -> WorkflowState:
     docs, citations = retrieve_context(state.ticket, kb_dir=kb_dir, history_path=history_path, logger=logger)
     state.citations = [c.__dict__ for c in citations]
+    return state
 
-    # Confiança simples: usa a confiança da triagem quando existir, senão 0.5.
-    state.confidence = state.triage.confidence if state.triage else 0.5
-    state.requires_human_review = state.is_sensitive or state.confidence < 0.6
 
-    triage_line = ""
-    if state.triage:
-        triage_line = f"Triagem: {state.triage.category} | Urgência: {state.triage.urgency} | Confiança: {state.triage.confidence:.2f}\n"
+def _node_worker(state: WorkflowState, *, logger: JsonlLogger) -> WorkflowState:
+    if not state.triage:
+        raise ValueError("triage ausente no estado")
 
-    sources_text = "\n".join(
-        f"- [{c.source}] {c.ref}" + (f" ({c.path})" if c.path else "") for c in citations
+    state.specialist = state.triage.category
+    out = run_specialist(
+        state.ticket,
+        triage=state.triage,
+        citations=state.citations,
+        is_sensitive=state.is_sensitive,
+        logger=logger,
+    )
+    state.confidence = out.confidence
+    state.requires_human_review = state.is_sensitive or out.requires_human_review or state.confidence < 0.6
+
+    triage_line = f"Triagem: {state.triage.category} | Urgência: {state.triage.urgency} | Confiança(triagem): {state.triage.confidence:.2f}\n"
+    citations_text = "\n".join(
+        f"- [{c.get('source')}] {c.get('ref')}" + (f" ({c.get('path')})" if c.get("path") else "")
+        for c in state.citations
     )
 
     state.draft = (
         f"{triage_line}"
+        f"Especialista acionado: {state.specialist}\n\n"
         f"Ticket {state.ticket['id']} ({state.ticket['tipo']}): {state.ticket['titulo']}\n"
         f"Cliente: {state.ticket['nome_cliente']} ({state.ticket['id_cliente']})\n"
         f"Resumo: {state.ticket['descricao']}\n\n"
         "Resposta sugerida (rascunho):\n"
-        "- Validar a divergência no extrato e solicitar evidências (print/linha do extrato).\n"
-        "- Conferir cobranças/conciliação e, se aplicável, orientar sobre reembolso/ajuste.\n\n"
+        f"{out.draft}\n\n"
         "Fontes consultadas (citações):\n"
-        f"{sources_text}\n\n"
+        f"{citations_text}\n\n"
         f"Confiança: {state.confidence:.2f}\n"
         f"Requer revisão humana: {'SIM' if state.requires_human_review else 'NÃO'}\n"
+        f"Motivo: {out.rationale}\n"
     )
+    logger.log("worker_selected", category=state.specialist)
     return state
+
+
+def _route_by_category(state: WorkflowState) -> str:
+    if not state.triage:
+        return "worker_default"
+    if state.triage.category == "técnica":
+        return "worker_tecnica"
+    if state.triage.category == "comercial":
+        return "worker_comercial"
+    if state.triage.category == "financeira":
+        return "worker_financeira"
+    if state.triage.category == "escalação":
+        return "worker_escalacao"
+    return "worker_default"
 
 
 def _node_hil(state: WorkflowState, *, logger: JsonlLogger) -> WorkflowState:
@@ -102,7 +164,13 @@ def build_workflow_graph(
     g = StateGraph(WorkflowState)
     g.add_node("consult_mocks", lambda s: _node_consult_mocks(s, logger=logger, kb_dir=kb_dir, history_path=history_path))
     g.add_node("triage", lambda s: _node_triage(s, logger=logger))
+    g.add_node("human_direct", lambda s: _node_human_direct(s, logger=logger))
     g.add_node("rag_and_draft", lambda s: _node_rag_and_draft(s, logger=logger, kb_dir=kb_dir, history_path=history_path))
+    g.add_node("worker_tecnica", lambda s: _node_worker(s, logger=logger))
+    g.add_node("worker_comercial", lambda s: _node_worker(s, logger=logger))
+    g.add_node("worker_financeira", lambda s: _node_worker(s, logger=logger))
+    g.add_node("worker_escalacao", lambda s: _node_worker(s, logger=logger))
+    g.add_node("worker_default", lambda s: _node_worker(s, logger=logger))
 
     def hil_node(s: WorkflowState) -> WorkflowState:
         if hil_mode == "interactive":
@@ -119,8 +187,14 @@ def build_workflow_graph(
     g.add_node("hil", hil_node)
     g.set_entry_point("consult_mocks")
     g.add_edge("consult_mocks", "triage")
-    g.add_edge("triage", "rag_and_draft")
-    g.add_edge("rag_and_draft", "hil")
+    g.add_conditional_edges("triage", _route_after_triage)
+    g.add_edge("human_direct", "hil")
+    g.add_conditional_edges("rag_and_draft", _route_by_category)
+    g.add_edge("worker_tecnica", "hil")
+    g.add_edge("worker_comercial", "hil")
+    g.add_edge("worker_financeira", "hil")
+    g.add_edge("worker_escalacao", "hil")
+    g.add_edge("worker_default", "hil")
     g.add_edge("hil", END)
     return g.compile()
 
