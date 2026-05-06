@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Callable
 from dataclasses import asdict
 from pathlib import Path
 from typing import Any
@@ -11,7 +12,7 @@ from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain_openai import ChatOpenAI
 
-from customer_success_ai.mocks.loader import KbDoc, load_kb_docs, load_tickets_history
+from customer_success_ai.mocks.loader import KbDoc, load_kb_docs
 from customer_success_ai.observability import JsonlLogger, StepTimer
 from customer_success_ai.rag.models import Citation
 from customer_success_ai.workflow.state import Ticket
@@ -92,10 +93,16 @@ def _rerank_with_llm(query: str, candidates: list[Document], *, logger: JsonlLog
                 {"role": "user", "content": json.dumps(prompt, ensure_ascii=False)},
             ]
         ).content
-        data = json.loads(raw)
-        order = data.get("order", [])
-        ranked = [candidates[i] for i in order if isinstance(i, int) and 0 <= i < len(candidates)]
-        if not ranked:
+        ranked = candidates
+        try:
+            data = json.loads(raw) if isinstance(raw, str) else {}
+            order = data.get("order", [])
+            ranked = [candidates[i] for i in order if isinstance(i, int) and 0 <= i < len(candidates)]
+            if not ranked:
+                ranked = candidates
+                logger.log("rerank_fallback", reason="empty_or_bad_order")
+        except json.JSONDecodeError as e:
+            logger.log("rerank_fallback", reason="invalid_json", error=str(e), raw_preview=str(raw)[:200])
             ranked = candidates
         logger.log("rerank_done", candidates=len(candidates), returned=len(ranked))
         return ranked
@@ -105,13 +112,13 @@ def retrieve_context(
     ticket: Ticket,
     *,
     kb_dir: Path,
-    history_path: Path,
+    load_history: Callable[[], list[dict[str, Any]]],
     logger: JsonlLogger,
     top_k: int = 8,
 ) -> tuple[list[Document], list[Citation]]:
     with StepTimer(logger, "rag_retrieve"):
         kb_docs = load_kb_docs(kb_dir)
-        history = load_tickets_history(history_path)
+        history = load_history()
         docs = _split_docs(_kb_to_documents(kb_docs) + _tickets_to_documents(history))
 
         embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")

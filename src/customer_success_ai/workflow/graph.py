@@ -5,8 +5,6 @@ from pathlib import Path
 from typing import Any
 
 from langgraph.graph import END, StateGraph
-
-from customer_success_ai.mocks.loader import load_tickets_history
 from customer_success_ai.observability import JsonlLogger, StepTimer
 from customer_success_ai.rag.retriever import retrieve_context
 from customer_success_ai.agents.kb_generator import generate_kb_article
@@ -20,9 +18,15 @@ def _count_open_tickets_for_customer(history: list[dict], customer_id: str) -> i
     return sum(1 for t in history if t.get("id_cliente") == customer_id and t.get("status") != "finalizado")
 
 
-def _node_consult_mocks(state: WorkflowState, *, logger: JsonlLogger, kb_dir: Path, history_path: Path) -> WorkflowState:
+def _node_consult_mocks(
+    state: WorkflowState,
+    *,
+    logger: JsonlLogger,
+    kb_dir: Path,
+    load_history: Callable[[], list[dict[str, Any]]],
+) -> WorkflowState:
     with StepTimer(logger, "consult_mocks"):
-        history = load_tickets_history(history_path)
+        history = load_history()
         open_count = _count_open_tickets_for_customer(history, state.ticket["id_cliente"])
 
         state.open_tickets_for_customer = open_count
@@ -72,8 +76,14 @@ def _node_human_direct(state: WorkflowState, *, logger: JsonlLogger) -> Workflow
     return state
 
 
-def _node_rag_and_draft(state: WorkflowState, *, logger: JsonlLogger, kb_dir: Path, history_path: Path) -> WorkflowState:
-    docs, citations = retrieve_context(state.ticket, kb_dir=kb_dir, history_path=history_path, logger=logger)
+def _node_rag_and_draft(
+    state: WorkflowState,
+    *,
+    logger: JsonlLogger,
+    kb_dir: Path,
+    load_history: Callable[[], list[dict[str, Any]]],
+) -> WorkflowState:
+    docs, citations = retrieve_context(state.ticket, kb_dir=kb_dir, load_history=load_history, logger=logger)
     state.citations = [c.__dict__ for c in citations]
     return state
 
@@ -136,7 +146,7 @@ def _node_hil(state: WorkflowState, *, logger: JsonlLogger) -> WorkflowState:
         print("\n=== RASCUNHO ===")
         print(state.draft)
         print("Requer revisão humana:", "SIM" if state.requires_human_review else "NÃO")
-        print(f"Tickets vivos do cliente (histórico mock): {state.open_tickets_for_customer}")
+        print(f"Tickets vivos do cliente (histórico): {state.open_tickets_for_customer}")
 
         while True:
             choice = input("\nHIL - escolha: [a]provar, [r]ejeitar, [c]orrigir: ").strip().lower()
@@ -251,12 +261,17 @@ def build_workflow_graph(
     *,
     logger: JsonlLogger,
     kb_dir: Path,
-    history_path: Path,
+    load_history: Callable[[], list[dict[str, Any]]],
     hil_mode: str = "interactive",
     hil_correction: str | None = None,
+    kb_offer: str | None = None,
+    kb_validate: str | None = None,
 ):
     g = StateGraph(WorkflowState)
-    g.add_node("consult_mocks", lambda s: _node_consult_mocks(s, logger=logger, kb_dir=kb_dir, history_path=history_path))
+    g.add_node(
+        "consult_mocks",
+        lambda s: _node_consult_mocks(s, logger=logger, kb_dir=kb_dir, load_history=load_history),
+    )
     g.add_node("triage", lambda s: _node_triage(s, logger=logger))
     g.add_node("human_direct", lambda s: _node_human_direct(s, logger=logger))
     g.add_node(

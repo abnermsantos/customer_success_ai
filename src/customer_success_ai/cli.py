@@ -8,7 +8,10 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 from customer_success_ai.config import AppConfig
+from customer_success_ai.mocks.loader import tickets_historico_loader
 from customer_success_ai.observability import JsonlLogger, StepTimer
+from customer_success_ai.mocks.tickets_api import health_url, historico_url, normalize_api_base
+from customer_success_ai.mocks.tickets_mock_spawn import local_tickets_mock_session
 from customer_success_ai.workflow.graph import build_workflow_graph
 from customer_success_ai.workflow.state import WorkflowState, Ticket
 
@@ -18,16 +21,50 @@ def _load_config() -> AppConfig:
     log_dir = Path(os.getenv("LOG_DIR", ".logs"))
     log_level = os.getenv("LOG_LEVEL", "INFO").upper()
     mocks_dir = Path(os.getenv("MOCKS_DIR", "mocks"))
-    tickets_history_path = mocks_dir / "tickets" / "tickets_historico_mock.json"
     kb_dir = mocks_dir / "base_conhecimento"
+
+    raw_base = os.getenv("TICKETS_API_URL", "").strip()
+    if not raw_base:
+        raise SystemExit(
+            "Defina TICKETS_API_URL no ambiente (ex.: http://127.0.0.1:8000/tickets). "
+            "O cliente chama /historico e /health relativos a essa base."
+        )
+    base = normalize_api_base(raw_base)
+
     return AppConfig(
         log_dir=log_dir,
         log_level=log_level,
         mocks_dir=mocks_dir,
-        tickets_history_path=tickets_history_path,
         kb_dir=kb_dir,
         openai_api_key=os.getenv("OPENAI_API_KEY"),
+        tickets_api_base=base,
+        tickets_historico_url=historico_url(base),
+        tickets_health_url=health_url(base),
     )
+
+
+def _invoke_workflow(
+    config: AppConfig,
+    logger: JsonlLogger,
+    ticket: Ticket,
+    *,
+    hil_mode: str = "interactive",
+    hil_correction: str | None = None,
+    kb_offer: str | None = None,
+    kb_validate: str | None = None,
+):
+    with local_tickets_mock_session(config.tickets_api_base, config.tickets_health_url):
+        load_history = tickets_historico_loader(config.tickets_historico_url)
+        graph = build_workflow_graph(
+            logger=logger,
+            kb_dir=config.kb_dir,
+            load_history=load_history,
+            hil_mode=hil_mode,
+            hil_correction=hil_correction,
+            kb_offer=kb_offer,
+            kb_validate=kb_validate,
+        )
+        return graph.invoke(WorkflowState(ticket=ticket))
 
 
 def run() -> int:
@@ -58,18 +95,11 @@ def run() -> int:
             log_dir=str(config.log_dir),
             log_level=config.log_level,
             mocks_dir=str(config.mocks_dir.as_posix()),
+            tickets_api_base=config.tickets_api_base,
         )
 
-    # Modo padrão: interativo (HIL via input()). Para execuções automatizadas, use CLI flag.
-    graph = build_workflow_graph(
-        logger=logger,
-        kb_dir=config.kb_dir,
-        history_path=config.tickets_history_path,
-    )
-    state = WorkflowState(ticket=ticket)
-
     with StepTimer(logger, "graph_invoke"):
-        result = graph.invoke(state)
+        result = _invoke_workflow(config, logger, ticket, hil_mode="interactive")
 
     with StepTimer(logger, "shutdown"):
         hil_decision = result["hil_decision"] if isinstance(result, dict) else result.hil_decision
@@ -142,17 +172,15 @@ def main(argv: list[str] | None = None) -> int:
             "atualizado_em": "2026-03-07T08:00:00",
         }
 
-        graph = build_workflow_graph(
-            logger=logger,
-            kb_dir=config.kb_dir,
-            history_path=config.tickets_history_path,
+        result = _invoke_workflow(
+            config,
+            logger,
+            ticket,
             hil_mode=args.hil,
             hil_correction=args.correcao if args.correcao else None,
             kb_offer=args.gerar_kb,
             kb_validate=args.validar_kb,
         )
-        state = WorkflowState(ticket=ticket)
-        result = graph.invoke(state)
         hil_decision = result["hil_decision"] if isinstance(result, dict) else result.hil_decision
         kb_req = result["kb_generate_requested"] if isinstance(result, dict) else result.kb_generate_requested
         kb_val = result["kb_validation_decision"] if isinstance(result, dict) else result.kb_validation_decision
@@ -177,4 +205,3 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
