@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import uuid
 from datetime import datetime, timezone
@@ -24,10 +25,83 @@ from customer_success_ai.mcp_backend.spawn import local_mcp_session
 from customer_success_ai.storage.sqlite import SQLiteRunStorage
 from customer_success_ai.workflow.graph import build_workflow_graph
 from customer_success_ai.workflow.state import WorkflowState, Ticket
+from customer_success_ai.triage.ticket_input import ticket_from_client_input
+from customer_success_ai.triage.router import enrich_ticket_from_triage, triage_ticket
 
 
 def _utc_now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+
+def _demo_ticket() -> Ticket:
+    return {
+        "id": "TKT-0008",
+        "titulo": "Cliente com fatura em atraso",
+        "descricao": "Divergência financeira identificada pelo cliente no extrato do mês.",
+        "tipo": "financeira",
+        "status": "aberto",
+        "prioridade": "baixo",
+        "responsavel": "Ana Lima",
+        "id_cliente": "CLI-007",
+        "nome_cliente": "Eta Consultoria",
+        "criado_em": "2025-10-22T20:42:00",
+        "atualizado_em": "2026-03-07T08:00:00",
+    }
+
+
+def _ticket_from_cli(cliente: str | None, descricao: str | None) -> Ticket:
+    c = (cliente or "").strip()
+    d = (descricao or "").strip()
+    if c or d:
+        if not c or not d:
+            raise SystemExit("Para entrada do cliente informe ambos: --cliente e --descricao.")
+        try:
+            return ticket_from_client_input(c, d)
+        except ValueError as e:
+            raise SystemExit(str(e))
+    return _demo_ticket()
+
+
+def cmd_triagem(*, cliente: str, descricao: str) -> int:
+    """Somente OpenAI + log local; não exige TICKETS_API_URL nem MCP."""
+    load_dotenv(override=False)
+    if not os.getenv("OPENAI_API_KEY"):
+        raise SystemExit("Defina OPENAI_API_KEY no ambiente.")
+
+    thread_id = str(uuid.uuid4())
+    log_dir = Path(os.getenv("LOG_DIR", ".logs"))
+    log_dir.mkdir(parents=True, exist_ok=True)
+    log_path = log_dir / "customer-success-ai.jsonl"
+    logger = JsonlLogger(path=log_path, thread_id=thread_id)
+
+    try:
+        ticket = ticket_from_client_input(cliente, descricao)
+    except ValueError as e:
+        raise SystemExit(str(e))
+
+    print("Ticket mínimo (entrada)...")
+    print(json.dumps(ticket, ensure_ascii=False, indent=2))
+
+    result, err = triage_ticket(ticket, logger=logger)
+    if err or result is None:
+        print(f"\nTriagem falhou: {err}")
+        return 1
+
+    enriched = enrich_ticket_from_triage(ticket, result)
+    out = {
+        "triage": {
+            "category": result.category,
+            "urgency": result.urgency,
+            "confidence": result.confidence,
+            "rationale": result.rationale,
+            "titulo_modelo": result.ticket_titulo,
+        },
+        "ticket_apos_triagem": enriched,
+    }
+    print("\nResultado:")
+    print(json.dumps(out, ensure_ascii=False, indent=2))
+    print(f"\nLog: {log_path}")
+    return 0
 
 
 def _load_config() -> AppConfig:
@@ -111,7 +185,7 @@ def _invoke_workflow(
         with local_mcp_session(tickets_api_url=config.tickets_api_base, mcp_url=mcp_url):
             return _run_graph()
 
-def run() -> int:
+def run(*, cliente: str | None = None, descricao: str | None = None) -> int:
     config = _load_config()
     thread_id = str(uuid.uuid4())
     log_path = config.log_dir / "customer-success-ai.jsonl"
@@ -122,19 +196,7 @@ def run() -> int:
 
     print("Iniciando customer-success-ai...")
 
-    ticket: Ticket = {
-        "id": "TKT-0008",
-        "titulo": "Cliente com fatura em atraso",
-        "descricao": "Divergência financeira identificada pelo cliente no extrato do mês.",
-        "tipo": "financeira",
-        "status": "aberto",
-        "prioridade": "baixo",
-        "responsavel": "Ana Lima",
-        "id_cliente": "CLI-007",
-        "nome_cliente": "Eta Consultoria",
-        "criado_em": "2025-10-22T20:42:00",
-        "atualizado_em": "2026-03-07T08:00:00",
-    }
+    ticket = _ticket_from_cli(cliente, descricao)
 
     with StepTimer(logger, "bootstrap"):
         logger.log(
@@ -180,6 +242,14 @@ def main(argv: list[str] | None = None) -> int:
     sub = parser.add_subparsers(dest="cmd")
     p_run = sub.add_parser("run", help="Executa o fluxo")
     p_mcp = sub.add_parser("mcp", help="Sobe o backend MCP (KB + Tickets)")
+    p_triagem = sub.add_parser(
+        "triagem",
+        help="Só triagem LLM a partir do nome do cliente e da descrição (sem workflow completo).",
+    )
+    p_triagem.add_argument("--cliente", required=True, help="Nome do cliente")
+    p_triagem.add_argument("--descricao", required=True, help="Descrição do problema")
+    p_run.add_argument("--cliente", default=None, help="Nome do cliente (use com --descricao)")
+    p_run.add_argument("--descricao", default=None, help="Descrição do problema (use com --cliente)")
     p_run.add_argument(
         "--hil",
         default="interactive",
@@ -209,9 +279,15 @@ def main(argv: list[str] | None = None) -> int:
         mcp_main()
         return 0
 
+    if args.cmd == "triagem":
+        return cmd_triagem(cliente=args.cliente, descricao=args.descricao)
+
     if args.cmd in (None, "run"):
-        if args.hil == "interactive":
-            return run()
+        cliente = getattr(args, "cliente", None)
+        descricao = getattr(args, "descricao", None)
+        hil_mode = getattr(args, "hil", "interactive")
+        if hil_mode == "interactive":
+            return run(cliente=cliente, descricao=descricao)
 
         # Execução não-interativa para smoke tests / pipelines.
         config = _load_config()
@@ -222,19 +298,7 @@ def main(argv: list[str] | None = None) -> int:
         storage.init()
         memory = FeedbackMemory(storage=storage)
 
-        ticket: Ticket = {
-            "id": "TKT-0008",
-            "titulo": "Cliente com fatura em atraso",
-            "descricao": "Divergência financeira identificada pelo cliente no extrato do mês.",
-            "tipo": "financeira",
-            "status": "aberto",
-            "prioridade": "baixo",
-            "responsavel": "Ana Lima",
-            "id_cliente": "CLI-007",
-            "nome_cliente": "Eta Consultoria",
-            "criado_em": "2025-10-22T20:42:00",
-            "atualizado_em": "2026-03-07T08:00:00",
-        }
+        ticket = _ticket_from_cli(cliente, descricao)
 
         result = _invoke_workflow(
             config,
@@ -243,9 +307,9 @@ def main(argv: list[str] | None = None) -> int:
             memory,
             thread_id,
             hil_mode=args.hil,
-            hil_correction=args.correcao if args.correcao else None,
-            kb_offer=args.gerar_kb,
-            kb_validate=args.validar_kb,
+            hil_correction=(args.correcao if getattr(args, "correcao", "") else None),
+            kb_offer=getattr(args, "gerar_kb", None),
+            kb_validate=getattr(args, "validar_kb", None),
         )
         hil_decision = result["hil_decision"] if isinstance(result, dict) else result.hil_decision
         kb_req = result["kb_generate_requested"] if isinstance(result, dict) else result.kb_generate_requested

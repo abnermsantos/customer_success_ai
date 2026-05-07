@@ -12,7 +12,7 @@ from customer_success_ai.agents.specialists import run_specialist
 from customer_success_ai.integrations.loader import create_kb_doc
 from customer_success_ai.agents.kb_doc_agent import generate_kb_article_with_tools, publish_kb_article_with_tools
 from customer_success_ai.memory.feedback import FeedbackMemory
-from customer_success_ai.triage.router import triage_ticket
+from customer_success_ai.triage.router import enrich_ticket_from_triage, triage_ticket
 from customer_success_ai.workflow.state import WorkflowState
 
 
@@ -51,6 +51,7 @@ def _node_triage(state: WorkflowState, *, logger: JsonlLogger, feedback_memory: 
     else:
         state.triage = result
         state.classification_error = None
+        state.ticket = enrich_ticket_from_triage(state.ticket, result)
     return state
 
 

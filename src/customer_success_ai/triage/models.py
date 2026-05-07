@@ -19,4 +19,5 @@ class TriageResult:
     customer_name: str
     confidence: float
     rationale: str
+    ticket_titulo: str | None = None
 

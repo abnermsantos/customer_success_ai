@@ -7,22 +7,25 @@ from dataclasses import asdict
 from langchain_openai import ChatOpenAI
 
 from customer_success_ai.observability import JsonlLogger, StepTimer
-from customer_success_ai.triage.models import ALLOWED_CATEGORIES, TicketCategory, TriageResult
+from customer_success_ai.triage.models import ALLOWED_CATEGORIES, TriageResult
 from customer_success_ai.workflow.state import Ticket
 
 
 SYSTEM = """Você é um agente classificador de tickets de Customer Success.
-Tarefa: dado um ticket em português, classifique:
+Tarefa: dado um ticket em português, classifique e complemente para o painel de atendimento:
 - category: uma de ["técnica","comercial","financeira","escalação"]
 - urgency: inteiro 1..4 (1=mais urgente, 4=menos urgente)
 - confidence: float 0..1
 - rationale: 1 frase curta justificando
+- titulo: uma linha curta (idealmente até 120 caracteres) que resume o problema para o título do ticket
 
 Se o ticket for ambíguo, incompleto ou não se encaixar claramente em nenhuma categoria acima,
 responda com category: null e urgency: null, confidence próximo de 0 e explique em rationale.
 
-Responda SOMENTE em JSON válido com as chaves: category, urgency, confidence, rationale.
+Responda SOMENTE em JSON válido com as chaves: category, urgency, confidence, rationale, titulo.
 """
+
+URGENCY_TO_PRIORIDADE = {1: "crítica", 2: "alta", 3: "média", 4: "baixa"}
 
 
 def _extract_json(raw: str) -> str:
@@ -73,6 +76,16 @@ def _parse_triage_payload(data: dict, ticket: Ticket) -> tuple[TriageResult | No
     if not (0.0 <= conf <= 1.0):
         return None, f"confidence fora do intervalo 0..1: {conf}."
 
+    raw_titulo = data.get("titulo")
+    ticket_titulo: str | None
+    if raw_titulo is None:
+        ticket_titulo = None
+    elif isinstance(raw_titulo, str):
+        s = raw_titulo.strip()
+        ticket_titulo = (s[:200] + "…") if len(s) > 200 else s if s else None
+    else:
+        return None, f"titulo inválido (esperado string ou null): {raw_titulo!r}."
+
     result = TriageResult(
         category=cat,
         urgency=urg_i,  # type: ignore[arg-type]
@@ -80,8 +93,33 @@ def _parse_triage_payload(data: dict, ticket: Ticket) -> tuple[TriageResult | No
         customer_name=ticket["nome_cliente"],
         confidence=conf,
         rationale=str(rationale or ""),
+        ticket_titulo=ticket_titulo,
     )
     return result, None
+
+
+def _fallback_titulo_from_descricao(descricao: str) -> str:
+    line = descricao.strip().split("\n", 1)[0].strip()
+    if not line:
+        return "Solicitação do cliente"
+    return line[:120] + ("…" if len(line) > 120 else "")
+
+
+def enrich_ticket_from_triage(ticket: Ticket, triage: TriageResult) -> Ticket:
+    """Alinha tipo/prioridade/título ao resultado da triagem (para RAG e exibição)."""
+    prio = URGENCY_TO_PRIORIDADE.get(triage.urgency)
+    if prio is None:
+        raise ValueError(f"urgência não mapeável: {triage.urgency!r}")
+
+    merged = dict(ticket)
+    merged["tipo"] = triage.category
+    merged["prioridade"] = prio
+    merged["titulo"] = (
+        triage.ticket_titulo.strip()
+        if (triage.ticket_titulo and triage.ticket_titulo.strip())
+        else _fallback_titulo_from_descricao(ticket["descricao"])
+    )
+    return merged  # type: ignore[return-value]
 
 
 def triage_ticket(
