@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 from collections.abc import Callable
 from dataclasses import asdict
-from pathlib import Path
 from typing import Any
 
 from langchain_core.documents import Document
@@ -12,7 +11,7 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain_openai import ChatOpenAI
 
-from customer_success_ai.mocks.loader import KbDoc, load_kb_docs
+from customer_success_ai.mocks.loader import KbDoc, fetch_kb_search
 from customer_success_ai.observability import JsonlLogger, StepTimer
 from customer_success_ai.rag.models import Citation
 from customer_success_ai.workflow.state import Ticket
@@ -111,13 +110,18 @@ def _rerank_with_llm(query: str, candidates: list[Document], *, logger: JsonlLog
 def retrieve_context(
     ticket: Ticket,
     *,
-    kb_dir: Path,
+    kb_search_url: str,
     load_history: Callable[[], list[dict[str, Any]]],
     logger: JsonlLogger,
     top_k: int = 5,
 ) -> tuple[list[Document], list[Citation]]:
     with StepTimer(logger, "rag_retrieve"):
-        kb_docs = load_kb_docs(kb_dir)
+        kb_docs = fetch_kb_search(
+            kb_search_url,
+            category=str(ticket.get("tipo") or "").strip().lower(),
+            limit=50,
+            timeout=120.0,
+        )
         history = load_history()
         docs = _split_docs(_kb_to_documents(kb_docs) + _tickets_to_documents(history))
 

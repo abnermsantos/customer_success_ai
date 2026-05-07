@@ -9,6 +9,7 @@ from customer_success_ai.observability import JsonlLogger, StepTimer
 from customer_success_ai.rag.retriever import retrieve_context
 from customer_success_ai.agents.kb_generator import generate_kb_article
 from customer_success_ai.agents.specialists import run_specialist
+from customer_success_ai.mocks.loader import create_kb_doc
 from customer_success_ai.memory.feedback import FeedbackMemory
 from customer_success_ai.triage.router import triage_ticket
 from customer_success_ai.workflow.state import WorkflowState
@@ -23,7 +24,6 @@ def _node_consult_mocks(
     state: WorkflowState,
     *,
     logger: JsonlLogger,
-    kb_dir: Path,
     load_history: Callable[[], list[dict[str, Any]]],
 ) -> WorkflowState:
     with StepTimer(logger, "consult_mocks"):
@@ -86,10 +86,10 @@ def _node_rag_and_draft(
     state: WorkflowState,
     *,
     logger: JsonlLogger,
-    kb_dir: Path,
+    kb_search_url: str,
     load_history: Callable[[], list[dict[str, Any]]],
 ) -> WorkflowState:
-    docs, citations = retrieve_context(state.ticket, kb_dir=kb_dir, load_history=load_history, logger=logger)
+    docs, citations = retrieve_context(state.ticket, kb_search_url=kb_search_url, load_history=load_history, logger=logger)
     state.citations = [c.__dict__ for c in citations]
     return state
 
@@ -269,10 +269,28 @@ def _node_hil_kb_validate(
     return state
 
 
+def _node_kb_persist(state: WorkflowState, *, logger: JsonlLogger, kb_create_url: str) -> WorkflowState:
+    md = state.kb_article_markdown or ""
+    if not md.strip().startswith("---"):
+        logger.log("kb_persist_skipped", reason="empty_or_no_frontmatter", ticket_id=state.ticket["id"])
+        return state
+    with StepTimer(logger, "kb_persist"):
+        out = create_kb_doc(kb_create_url, markdown=md, timeout=120.0)
+        logger.log("kb_persisted", **out)
+    return state
+
+
+def _route_after_kb_validate(state: WorkflowState) -> str | object:
+    if state.kb_validation_decision == "aprovar":
+        return "kb_persist"
+    return END
+
+
 def build_workflow_graph(
     *,
     logger: JsonlLogger,
-    kb_dir: Path,
+    kb_search_url: str,
+    kb_create_url: str,
     load_history: Callable[[], list[dict[str, Any]]],
     feedback_memory: FeedbackMemory | None = None,
     checkpointer: Any | None = None,
@@ -284,13 +302,13 @@ def build_workflow_graph(
     g = StateGraph(WorkflowState)
     g.add_node(
         "consult_mocks",
-        lambda s: _node_consult_mocks(s, logger=logger, kb_dir=kb_dir, load_history=load_history),
+        lambda s: _node_consult_mocks(s, logger=logger, load_history=load_history),
     )
     g.add_node("triage", lambda s: _node_triage(s, logger=logger, feedback_memory=feedback_memory))
     g.add_node("human_direct", lambda s: _node_human_direct(s, logger=logger))
     g.add_node(
         "rag_and_draft",
-        lambda s: _node_rag_and_draft(s, logger=logger, kb_dir=kb_dir, load_history=load_history),
+        lambda s: _node_rag_and_draft(s, logger=logger, kb_search_url=kb_search_url, load_history=load_history),
     )
     g.add_node("worker_tecnica", lambda s: _node_worker(s, logger=logger, feedback_memory=feedback_memory))
     g.add_node("worker_comercial", lambda s: _node_worker(s, logger=logger, feedback_memory=feedback_memory))
@@ -333,6 +351,7 @@ def build_workflow_graph(
     g.add_node("hil_kb_offer", kb_offer_node)
     g.add_node("kb_generator", kb_gen_node)
     g.add_node("hil_kb_validate", kb_validate_node)
+    g.add_node("kb_persist", lambda s: _node_kb_persist(s, logger=logger, kb_create_url=kb_create_url))
     g.set_entry_point("consult_mocks")
     g.add_edge("consult_mocks", "triage")
     g.add_conditional_edges("triage", _route_after_triage)
@@ -346,6 +365,7 @@ def build_workflow_graph(
     g.add_conditional_edges("hil", _route_after_hil)
     g.add_conditional_edges("hil_kb_offer", _route_after_kb_offer)
     g.add_edge("kb_generator", "hil_kb_validate")
-    g.add_edge("hil_kb_validate", END)
+    g.add_conditional_edges("hil_kb_validate", _route_after_kb_validate)
+    g.add_edge("kb_persist", END)
     return g.compile(checkpointer=checkpointer)
 

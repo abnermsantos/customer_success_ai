@@ -12,6 +12,11 @@ from langgraph.checkpoint.sqlite import SqliteSaver
 from customer_success_ai.config import AppConfig
 from customer_success_ai.mocks.loader import tickets_historico_loader
 from customer_success_ai.observability import JsonlLogger, StepTimer
+from urllib.parse import urlparse
+
+from customer_success_ai.mocks.kb_api import normalize_api_base as normalize_kb_base
+from customer_success_ai.mocks.kb_api import create_doc_url as kb_create_doc_url
+from customer_success_ai.mocks.kb_api import search_url as kb_search_url
 from customer_success_ai.mocks.tickets_api import health_url, historico_url, normalize_api_base
 from customer_success_ai.mocks.tickets_mock_spawn import local_tickets_mock_session
 from customer_success_ai.memory.feedback import FeedbackMemory
@@ -29,7 +34,6 @@ def _load_config() -> AppConfig:
     log_dir = Path(os.getenv("LOG_DIR", ".logs"))
     log_level = os.getenv("LOG_LEVEL", "INFO").upper()
     mocks_dir = Path(os.getenv("MOCKS_DIR", "mocks"))
-    kb_dir = mocks_dir / "base_conhecimento"
     runs_db_path = Path(os.getenv("RUNS_DB_PATH", ".data/runs.sqlite"))
     checkpoints_db_path = Path(os.getenv("CHECKPOINTS_DB_PATH", ".data/checkpoints.sqlite"))
 
@@ -40,18 +44,27 @@ def _load_config() -> AppConfig:
             "O cliente chama /historico e /health relativos a essa base."
         )
     base = normalize_api_base(raw_base)
+    # KB usa o mesmo servidor mock; por padrão deriva de TICKETS_API_URL trocando /tickets por /kb.
+    raw_kb = os.getenv("KB_API_URL", "").strip()
+    if raw_kb:
+        kb_base = normalize_kb_base(raw_kb)
+    else:
+        u = urlparse(base)
+        kb_base = f"{u.scheme}://{u.netloc}/kb"
 
     return AppConfig(
         log_dir=log_dir,
         log_level=log_level,
         mocks_dir=mocks_dir,
-        kb_dir=kb_dir,
         runs_db_path=runs_db_path,
         checkpoints_db_path=checkpoints_db_path,
         openai_api_key=os.getenv("OPENAI_API_KEY"),
         tickets_api_base=base,
         tickets_historico_url=historico_url(base),
         tickets_health_url=health_url(base),
+        kb_api_base=kb_base,
+        kb_search_url=kb_search_url(kb_base),
+        kb_create_url=kb_create_doc_url(kb_base),
     )
 
 
@@ -72,7 +85,8 @@ def _invoke_workflow(
         with SqliteSaver.from_conn_string(str(config.checkpoints_db_path)) as checkpointer:
             graph = build_workflow_graph(
                 logger=logger,
-                kb_dir=config.kb_dir,
+                kb_search_url=config.kb_search_url,
+                kb_create_url=config.kb_create_url,
                 load_history=load_history,
                 feedback_memory=feedback_memory,
                 checkpointer=checkpointer,
@@ -117,6 +131,7 @@ def run() -> int:
             log_level=config.log_level,
             mocks_dir=str(config.mocks_dir.as_posix()),
             tickets_api_base=config.tickets_api_base,
+            kb_api_base=config.kb_api_base,
         )
 
     with StepTimer(logger, "graph_invoke"):

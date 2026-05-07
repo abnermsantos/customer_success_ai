@@ -35,23 +35,60 @@ def _parse_frontmatter_markdown(text: str) -> tuple[dict[str, Any], str]:
     return meta, body.lstrip("\n")
 
 
-def load_kb_docs(kb_dir: Path) -> list[KbDoc]:
+def fetch_kb_search(
+    url: str,
+    *,
+    category: str,
+    q: str = "",
+    limit: int = 8,
+    timeout: float = 60.0,
+) -> list[KbDoc]:
+    """GET JSON: lista de KB docs (dicts) retornada por /kb/search."""
+    from urllib.parse import urlencode
+
+    params = urlencode({"category": category, "q": q, "limit": str(limit)})
+    full = f"{url.rstrip('/')}" + ("" if "?" in url else f"?{params}")
+    req = Request(full, headers={"Accept": "application/json"}, method="GET")
+    with urlopen(req, timeout=timeout) as resp:
+        raw = resp.read().decode("utf-8")
+    data = json.loads(raw)
+    if not isinstance(data, list):
+        raise ValueError("KB search: resposta JSON deve ser um array na raiz")
+
     docs: list[KbDoc] = []
-    for p in sorted(kb_dir.glob("*.md")):
-        raw = p.read_text(encoding="utf-8")
-        meta, body = _parse_frontmatter_markdown(raw)
+    for x in data:
+        if not isinstance(x, dict):
+            continue
         docs.append(
             KbDoc(
-                doc_id=str(meta.get("id") or p.stem),
-                title=str(meta.get("title") or p.stem),
-                category=str(meta.get("category") or ""),
-                tags=list(meta.get("tags") or []),
-                module=meta.get("module"),
-                source_path=str(p.as_posix()),
-                content=body,
+                doc_id=str(x.get("doc_id") or ""),
+                title=str(x.get("title") or ""),
+                category=str(x.get("category") or ""),
+                tags=list(x.get("tags") or []),
+                module=x.get("module"),
+                source_path=str(x.get("source_path") or ""),
+                content=str(x.get("content") or ""),
             )
         )
     return docs
+
+
+def create_kb_doc(url: str, *, markdown: str, timeout: float = 60.0) -> dict[str, Any]:
+    """POST JSON para /kb/docs para persistir um novo arquivo .md."""
+    payload = {"markdown": markdown}
+    body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+    req = Request(
+        url.strip(),
+        data=body,
+        headers={"Content-Type": "application/json", "Accept": "application/json"},
+        method="POST",
+    )
+    with urlopen(req, timeout=timeout) as resp:
+        raw = resp.read().decode("utf-8")
+    data = json.loads(raw)
+    if not isinstance(data, dict):
+        raise ValueError("KB create: resposta JSON deve ser um objeto")
+    return data
 
 
 def fetch_tickets_history(url: str, *, timeout: float = 60.0) -> list[dict[str, Any]]:
