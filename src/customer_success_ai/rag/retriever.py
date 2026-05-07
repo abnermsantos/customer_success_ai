@@ -8,7 +8,7 @@ from typing import Any
 
 from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain_openai import ChatOpenAI
 
@@ -114,7 +114,7 @@ def retrieve_context(
     kb_dir: Path,
     load_history: Callable[[], list[dict[str, Any]]],
     logger: JsonlLogger,
-    top_k: int = 8,
+    top_k: int = 5,
 ) -> tuple[list[Document], list[Citation]]:
     with StepTimer(logger, "rag_retrieve"):
         kb_docs = load_kb_docs(kb_dir)

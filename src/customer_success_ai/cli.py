@@ -3,17 +3,25 @@ from __future__ import annotations
 import argparse
 import os
 import uuid
+from datetime import datetime, timezone
 from pathlib import Path
 
 from dotenv import load_dotenv
+from langgraph.checkpoint.sqlite import SqliteSaver
 
 from customer_success_ai.config import AppConfig
 from customer_success_ai.mocks.loader import tickets_historico_loader
 from customer_success_ai.observability import JsonlLogger, StepTimer
 from customer_success_ai.mocks.tickets_api import health_url, historico_url, normalize_api_base
 from customer_success_ai.mocks.tickets_mock_spawn import local_tickets_mock_session
+from customer_success_ai.memory.feedback import FeedbackMemory
+from customer_success_ai.storage.sqlite import SQLiteRunStorage
 from customer_success_ai.workflow.graph import build_workflow_graph
 from customer_success_ai.workflow.state import WorkflowState, Ticket
+
+
+def _utc_now_iso() -> str:
+    return datetime.now(timezone.utc).isoformat()
 
 
 def _load_config() -> AppConfig:
@@ -22,6 +30,8 @@ def _load_config() -> AppConfig:
     log_level = os.getenv("LOG_LEVEL", "INFO").upper()
     mocks_dir = Path(os.getenv("MOCKS_DIR", "mocks"))
     kb_dir = mocks_dir / "base_conhecimento"
+    runs_db_path = Path(os.getenv("RUNS_DB_PATH", ".data/runs.sqlite"))
+    checkpoints_db_path = Path(os.getenv("CHECKPOINTS_DB_PATH", ".data/checkpoints.sqlite"))
 
     raw_base = os.getenv("TICKETS_API_URL", "").strip()
     if not raw_base:
@@ -36,6 +46,8 @@ def _load_config() -> AppConfig:
         log_level=log_level,
         mocks_dir=mocks_dir,
         kb_dir=kb_dir,
+        runs_db_path=runs_db_path,
+        checkpoints_db_path=checkpoints_db_path,
         openai_api_key=os.getenv("OPENAI_API_KEY"),
         tickets_api_base=base,
         tickets_historico_url=historico_url(base),
@@ -47,6 +59,8 @@ def _invoke_workflow(
     config: AppConfig,
     logger: JsonlLogger,
     ticket: Ticket,
+    feedback_memory: FeedbackMemory,
+    thread_id: str,
     *,
     hil_mode: str = "interactive",
     hil_correction: str | None = None,
@@ -55,16 +69,20 @@ def _invoke_workflow(
 ):
     with local_tickets_mock_session(config.tickets_api_base, config.tickets_health_url):
         load_history = tickets_historico_loader(config.tickets_historico_url)
-        graph = build_workflow_graph(
-            logger=logger,
-            kb_dir=config.kb_dir,
-            load_history=load_history,
-            hil_mode=hil_mode,
-            hil_correction=hil_correction,
-            kb_offer=kb_offer,
-            kb_validate=kb_validate,
-        )
-        return graph.invoke(WorkflowState(ticket=ticket))
+        with SqliteSaver.from_conn_string(str(config.checkpoints_db_path)) as checkpointer:
+            graph = build_workflow_graph(
+                logger=logger,
+                kb_dir=config.kb_dir,
+                load_history=load_history,
+                feedback_memory=feedback_memory,
+                checkpointer=checkpointer,
+                hil_mode=hil_mode,
+                hil_correction=hil_correction,
+                kb_offer=kb_offer,
+                kb_validate=kb_validate,
+            )
+            cfg = {"configurable": {"thread_id": thread_id}}
+            return graph.invoke(WorkflowState(ticket=ticket), cfg)
 
 
 def run() -> int:
@@ -72,6 +90,9 @@ def run() -> int:
     thread_id = str(uuid.uuid4())
     log_path = config.log_dir / "customer-success-ai.jsonl"
     logger = JsonlLogger(path=log_path, thread_id=thread_id)
+    storage = SQLiteRunStorage(config.runs_db_path)
+    storage.init()
+    memory = FeedbackMemory(storage=storage)
 
     print("Iniciando customer-success-ai...")
 
@@ -99,9 +120,12 @@ def run() -> int:
         )
 
     with StepTimer(logger, "graph_invoke"):
-        result = _invoke_workflow(config, logger, ticket, hil_mode="interactive")
+        result = _invoke_workflow(config, logger, ticket, memory, thread_id, hil_mode="interactive")
 
     with StepTimer(logger, "shutdown"):
+        state = result if isinstance(result, WorkflowState) else WorkflowState(**result)
+        storage.save_run(run_id=thread_id, created_at_utc=_utc_now_iso(), state=state)
+        memory.record_from_state(state=state, run_id=thread_id, created_at_utc=_utc_now_iso())
         hil_decision = result["hil_decision"] if isinstance(result, dict) else result.hil_decision
         kb_req = result.get("kb_generate_requested") if isinstance(result, dict) else result.kb_generate_requested
         kb_val = result.get("kb_validation_decision") if isinstance(result, dict) else result.kb_validation_decision
@@ -119,6 +143,7 @@ def run() -> int:
         if kb_val is not None:
             print(f"Validação KB (humano): {kb_val}")
         print(f"Log: {log_path}")
+        print(f"Runs DB: {config.runs_db_path}")
 
     return 0
 
@@ -157,6 +182,9 @@ def main(argv: list[str] | None = None) -> int:
         thread_id = str(uuid.uuid4())
         log_path = config.log_dir / "customer-success-ai.jsonl"
         logger = JsonlLogger(path=log_path, thread_id=thread_id)
+        storage = SQLiteRunStorage(config.runs_db_path)
+        storage.init()
+        memory = FeedbackMemory(storage=storage)
 
         ticket: Ticket = {
             "id": "TKT-0008",
@@ -176,6 +204,8 @@ def main(argv: list[str] | None = None) -> int:
             config,
             logger,
             ticket,
+            memory,
+            thread_id,
             hil_mode=args.hil,
             hil_correction=args.correcao if args.correcao else None,
             kb_offer=args.gerar_kb,
@@ -196,7 +226,11 @@ def main(argv: list[str] | None = None) -> int:
             kb_generate_requested=kb_req,
             kb_validation_decision=kb_val,
         )
+        state = result if isinstance(result, WorkflowState) else WorkflowState(**result)
+        storage.save_run(run_id=thread_id, created_at_utc=_utc_now_iso(), state=state)
+        memory.record_from_state(state=state, run_id=thread_id, created_at_utc=_utc_now_iso())
         print(f"Log: {log_path}")
+        print(f"Runs DB: {config.runs_db_path}")
         return 0
 
     parser.print_help()

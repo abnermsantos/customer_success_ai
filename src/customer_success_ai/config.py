@@ -10,6 +10,8 @@ class AppConfig:
     log_level: str
     mocks_dir: Path
     kb_dir: Path
+    runs_db_path: Path
+    checkpoints_db_path: Path
     openai_api_key: str | None
     tickets_api_base: str
     tickets_historico_url: str

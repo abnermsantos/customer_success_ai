@@ -51,6 +51,7 @@ def run_specialist(
     is_sensitive: bool,
     logger: JsonlLogger,
     model: str = "gpt-4o-mini",
+    feedback_memory: list[dict[str, Any]] | None = None,
 ) -> SpecialistOutput:
     with StepTimer(logger, f"worker_{triage.category}"):
         llm = ChatOpenAI(model=model, temperature=0)
@@ -69,6 +70,7 @@ def run_specialist(
             "triage": asdict(triage),
             "citations": citations,
             "is_sensitive": is_sensitive,
+            "feedback_memory": feedback_memory or [],
         }
 
         raw = llm.invoke(

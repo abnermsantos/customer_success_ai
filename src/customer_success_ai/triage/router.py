@@ -84,7 +84,13 @@ def _parse_triage_payload(data: dict, ticket: Ticket) -> tuple[TriageResult | No
     return result, None
 
 
-def triage_ticket(ticket: Ticket, *, logger: JsonlLogger, model: str = "gpt-4o-mini") -> tuple[TriageResult | None, str | None]:
+def triage_ticket(
+    ticket: Ticket,
+    *,
+    logger: JsonlLogger,
+    model: str = "gpt-4o-mini",
+    feedback_memory: list[dict] | None = None,
+) -> tuple[TriageResult | None, str | None]:
     """Retorna (resultado, erro). Se erro não for None, o fluxo deve ir direto ao humano."""
     with StepTimer(logger, "triage"):
         llm = ChatOpenAI(model=model, temperature=0)
@@ -97,6 +103,7 @@ def triage_ticket(ticket: Ticket, *, logger: JsonlLogger, model: str = "gpt-4o-m
             "status": ticket["status"],
             "id_cliente": ticket["id_cliente"],
             "nome_cliente": ticket["nome_cliente"],
+            "feedback_memory": feedback_memory or [],
         }
 
         raw = ""

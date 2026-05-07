@@ -9,6 +9,7 @@ from customer_success_ai.observability import JsonlLogger, StepTimer
 from customer_success_ai.rag.retriever import retrieve_context
 from customer_success_ai.agents.kb_generator import generate_kb_article
 from customer_success_ai.agents.specialists import run_specialist
+from customer_success_ai.memory.feedback import FeedbackMemory
 from customer_success_ai.triage.router import triage_ticket
 from customer_success_ai.workflow.state import WorkflowState
 
@@ -36,8 +37,13 @@ def _node_consult_mocks(
         return state
 
 
-def _node_triage(state: WorkflowState, *, logger: JsonlLogger) -> WorkflowState:
-    result, err = triage_ticket(state.ticket, logger=logger)
+def _node_triage(state: WorkflowState, *, logger: JsonlLogger, feedback_memory: FeedbackMemory | None) -> WorkflowState:
+    triage_fb = None
+    if feedback_memory is not None:
+        triage_fb = feedback_memory.format_for_prompt(
+            feedback_memory.retrieve(ticket=state.ticket, category=None, limit=3, min_score=0.35)
+        )
+    result, err = triage_ticket(state.ticket, logger=logger, feedback_memory=triage_fb)
     if err:
         state.triage = None
         state.classification_error = err
@@ -88,17 +94,23 @@ def _node_rag_and_draft(
     return state
 
 
-def _node_worker(state: WorkflowState, *, logger: JsonlLogger) -> WorkflowState:
+def _node_worker(state: WorkflowState, *, logger: JsonlLogger, feedback_memory: FeedbackMemory | None) -> WorkflowState:
     if not state.triage:
         raise ValueError("triage ausente no estado")
 
     state.specialist = state.triage.category
+    specialist_fb = None
+    if feedback_memory is not None:
+        specialist_fb = feedback_memory.format_for_prompt(
+            feedback_memory.retrieve(ticket=state.ticket, category=state.triage.category, limit=3, min_score=0.35)
+        )
     out = run_specialist(
         state.ticket,
         triage=state.triage,
         citations=state.citations,
         is_sensitive=state.is_sensitive,
         logger=logger,
+        feedback_memory=specialist_fb,
     )
     state.confidence = out.confidence
     state.requires_human_review = state.is_sensitive or out.requires_human_review or state.confidence < 0.6
@@ -262,6 +274,8 @@ def build_workflow_graph(
     logger: JsonlLogger,
     kb_dir: Path,
     load_history: Callable[[], list[dict[str, Any]]],
+    feedback_memory: FeedbackMemory | None = None,
+    checkpointer: Any | None = None,
     hil_mode: str = "interactive",
     hil_correction: str | None = None,
     kb_offer: str | None = None,
@@ -272,17 +286,17 @@ def build_workflow_graph(
         "consult_mocks",
         lambda s: _node_consult_mocks(s, logger=logger, kb_dir=kb_dir, load_history=load_history),
     )
-    g.add_node("triage", lambda s: _node_triage(s, logger=logger))
+    g.add_node("triage", lambda s: _node_triage(s, logger=logger, feedback_memory=feedback_memory))
     g.add_node("human_direct", lambda s: _node_human_direct(s, logger=logger))
     g.add_node(
         "rag_and_draft",
         lambda s: _node_rag_and_draft(s, logger=logger, kb_dir=kb_dir, load_history=load_history),
     )
-    g.add_node("worker_tecnica", lambda s: _node_worker(s, logger=logger))
-    g.add_node("worker_comercial", lambda s: _node_worker(s, logger=logger))
-    g.add_node("worker_financeira", lambda s: _node_worker(s, logger=logger))
-    g.add_node("worker_escalacao", lambda s: _node_worker(s, logger=logger))
-    g.add_node("worker_default", lambda s: _node_worker(s, logger=logger))
+    g.add_node("worker_tecnica", lambda s: _node_worker(s, logger=logger, feedback_memory=feedback_memory))
+    g.add_node("worker_comercial", lambda s: _node_worker(s, logger=logger, feedback_memory=feedback_memory))
+    g.add_node("worker_financeira", lambda s: _node_worker(s, logger=logger, feedback_memory=feedback_memory))
+    g.add_node("worker_escalacao", lambda s: _node_worker(s, logger=logger, feedback_memory=feedback_memory))
+    g.add_node("worker_default", lambda s: _node_worker(s, logger=logger, feedback_memory=feedback_memory))
 
     non_interactive = hil_mode != "interactive"
 
@@ -333,5 +347,5 @@ def build_workflow_graph(
     g.add_conditional_edges("hil_kb_offer", _route_after_kb_offer)
     g.add_edge("kb_generator", "hil_kb_validate")
     g.add_edge("hil_kb_validate", END)
-    return g.compile()
+    return g.compile(checkpointer=checkpointer)
 
