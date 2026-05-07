@@ -1,14 +1,9 @@
 from __future__ import annotations
 
 import json
-from collections.abc import Callable
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Any
-from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
-
-import yaml
 
 
 @dataclass(frozen=True)
@@ -20,19 +15,6 @@ class KbDoc:
     module: str | None
     source_path: str
     content: str
-
-
-def _parse_frontmatter_markdown(text: str) -> tuple[dict[str, Any], str]:
-    if not text.startswith("---"):
-        return {}, text
-
-    parts = text.split("---", 2)
-    if len(parts) < 3:
-        return {}, text
-
-    _, fm_raw, body = parts[0], parts[1], parts[2]
-    meta = yaml.safe_load(fm_raw) or {}
-    return meta, body.lstrip("\n")
 
 
 def fetch_kb_search(
@@ -92,7 +74,7 @@ def create_kb_doc(url: str, *, markdown: str, timeout: float = 60.0) -> dict[str
 
 
 def fetch_tickets_history(url: str, *, timeout: float = 60.0) -> list[dict[str, Any]]:
-    """GET JSON: corpo deve ser a mesma lista de objetos que o arquivo mock (array na raiz)."""
+    """GET JSON: corpo deve ser um array na raiz."""
     req = Request(url, headers={"Accept": "application/json"}, method="GET")
     with urlopen(req, timeout=timeout) as resp:
         raw = resp.read().decode("utf-8")
@@ -100,16 +82,4 @@ def fetch_tickets_history(url: str, *, timeout: float = 60.0) -> list[dict[str, 
     if not isinstance(data, list):
         raise ValueError("Histórico de tickets: resposta JSON deve ser um array na raiz")
     return [x for x in data if isinstance(x, dict)]
-
-
-def tickets_historico_loader(historico_url: str) -> Callable[[], list[dict[str, Any]]]:
-    u = historico_url.strip()
-
-    def _from_api() -> list[dict[str, Any]]:
-        try:
-            return fetch_tickets_history(u)
-        except (HTTPError, URLError, TimeoutError, json.JSONDecodeError, ValueError) as e:
-            raise RuntimeError(f"Falha ao obter histórico de tickets em {u!r}: {e}") from e
-
-    return _from_api
 

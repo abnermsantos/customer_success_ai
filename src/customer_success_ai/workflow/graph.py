@@ -9,7 +9,7 @@ from customer_success_ai.observability import JsonlLogger, StepTimer
 from customer_success_ai.rag.retriever import retrieve_context
 from customer_success_ai.agents.kb_generator import generate_kb_article
 from customer_success_ai.agents.specialists import run_specialist
-from customer_success_ai.mocks.loader import create_kb_doc
+from customer_success_ai.integrations.loader import create_kb_doc
 from customer_success_ai.memory.feedback import FeedbackMemory
 from customer_success_ai.triage.router import triage_ticket
 from customer_success_ai.workflow.state import WorkflowState

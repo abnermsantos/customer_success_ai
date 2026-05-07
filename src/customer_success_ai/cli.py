@@ -10,16 +10,17 @@ from dotenv import load_dotenv
 from langgraph.checkpoint.sqlite import SqliteSaver
 
 from customer_success_ai.config import AppConfig
-from customer_success_ai.mocks.loader import tickets_historico_loader
+from customer_success_ai.integrations.loader import tickets_historico_loader
 from customer_success_ai.observability import JsonlLogger, StepTimer
 from urllib.parse import urlparse
 
-from customer_success_ai.mocks.kb_api import normalize_api_base as normalize_kb_base
-from customer_success_ai.mocks.kb_api import create_doc_url as kb_create_doc_url
-from customer_success_ai.mocks.kb_api import search_url as kb_search_url
-from customer_success_ai.mocks.tickets_api import health_url, historico_url, normalize_api_base
-from customer_success_ai.mocks.tickets_mock_spawn import local_tickets_mock_session
+from customer_success_ai.integrations.kb_api import normalize_api_base as normalize_kb_base
+from customer_success_ai.integrations.kb_api import create_doc_url as kb_create_doc_url
+from customer_success_ai.integrations.kb_api import search_url as kb_search_url
+from customer_success_ai.integrations.tickets_api import health_url, historico_url, normalize_api_base
+from customer_success_ai.integrations.tickets_mock_spawn import local_tickets_mock_session
 from customer_success_ai.memory.feedback import FeedbackMemory
+from customer_success_ai.mcp_backend.spawn import local_mcp_session
 from customer_success_ai.storage.sqlite import SQLiteRunStorage
 from customer_success_ai.workflow.graph import build_workflow_graph
 from customer_success_ai.workflow.state import WorkflowState, Ticket
@@ -80,7 +81,11 @@ def _invoke_workflow(
     kb_offer: str | None = None,
     kb_validate: str | None = None,
 ):
-    with local_tickets_mock_session(config.tickets_api_base, config.tickets_health_url):
+    mcp_url = (os.getenv("MCP_URL", "") or "").strip()
+    if not mcp_url:
+        raise SystemExit("Defina MCP_URL no ambiente (ex.: http://127.0.0.1:8000/mcp).")
+
+    def _run_graph():
         load_history = tickets_historico_loader(config.tickets_historico_url)
         with SqliteSaver.from_conn_string(str(config.checkpoints_db_path)) as checkpointer:
             graph = build_workflow_graph(
@@ -98,6 +103,13 @@ def _invoke_workflow(
             cfg = {"configurable": {"thread_id": thread_id}}
             return graph.invoke(WorkflowState(ticket=ticket), cfg)
 
+    # Ordem correta em dev local:
+    # 1) subir backend HTTP (tickets+kb mock) se aplicável
+    # 2) subir MCP (que depende do backend HTTP)
+    # 3) executar grafo (que chama MCP via integrations/loader.py)
+    with local_tickets_mock_session(config.tickets_api_base, config.tickets_health_url):
+        with local_mcp_session(tickets_api_url=config.tickets_api_base, mcp_url=mcp_url):
+            return _run_graph()
 
 def run() -> int:
     config = _load_config()
@@ -167,6 +179,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="customer-success-ai")
     sub = parser.add_subparsers(dest="cmd")
     p_run = sub.add_parser("run", help="Executa o fluxo")
+    p_mcp = sub.add_parser("mcp", help="Sobe o backend MCP (KB + Tickets)")
     p_run.add_argument(
         "--hil",
         default="interactive",
@@ -188,6 +201,14 @@ def main(argv: list[str] | None = None) -> int:
     )
 
     args = parser.parse_args(argv)
+    if args.cmd == "mcp":
+        # Backend MCP (Streamable HTTP).
+        # O servidor usa TICKETS_API_URL/KB_API_URL do ambiente, igual ao app.
+        from customer_success_ai.mcp_backend.server import main as mcp_main
+
+        mcp_main()
+        return 0
+
     if args.cmd in (None, "run"):
         if args.hil == "interactive":
             return run()

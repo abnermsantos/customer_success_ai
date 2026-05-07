@@ -36,7 +36,6 @@ def normalize_base_for_parse(base: str) -> str:
         return b
     return f"http://{b}"
 
-
 def _parse_bind_target(api_base: str) -> tuple[str, int]:
     u = urlparse(normalize_base_for_parse(api_base))
     if not u.hostname:

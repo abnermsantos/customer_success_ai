@@ -11,7 +11,7 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain_openai import ChatOpenAI
 
-from customer_success_ai.mocks.loader import KbDoc, fetch_kb_search
+from customer_success_ai.integrations.loader import KbDoc, fetch_kb_search
 from customer_success_ai.observability import JsonlLogger, StepTimer
 from customer_success_ai.rag.models import Citation
 from customer_success_ai.workflow.state import Ticket
