@@ -1,14 +1,39 @@
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import asdict, dataclass
-from typing import Any, Literal
+from typing import Any
 
 from langchain_openai import ChatOpenAI
 
 from customer_success_ai.observability import JsonlLogger, StepTimer
 from customer_success_ai.triage.models import TicketCategory, TriageResult
 from customer_success_ai.workflow.state import Ticket
+
+
+def _extract_json(raw: str) -> str:
+    text = raw.strip()
+    fence = re.search(r"```(?:json)?\s*([\s\S]*?)\s*```", text)
+    if fence:
+        return fence.group(1).strip()
+    return text
+
+
+def _msg_content_to_str(content: Any) -> str:
+    if content is None:
+        return ""
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        parts: list[str] = []
+        for block in content:
+            if isinstance(block, str):
+                parts.append(block)
+            elif isinstance(block, dict) and block.get("type") == "text":
+                parts.append(str(block.get("text") or ""))
+        return "".join(parts)
+    return str(content)
 
 
 @dataclass(frozen=True)
@@ -73,20 +98,60 @@ def run_specialist(
             "feedback_memory": feedback_memory or [],
         }
 
-        raw = llm.invoke(
+        msg = llm.invoke(
             [
                 {"role": "system", "content": _specialist_system(triage.category)},
                 {"role": "user", "content": json.dumps(payload, ensure_ascii=False)},
             ]
-        ).content
-
-        data = json.loads(raw)
-        out = SpecialistOutput(
-            draft=str(data["draft"]),
-            confidence=float(data["confidence"]),
-            requires_human_review=bool(data["requires_human_review"]),
-            rationale=str(data["rationale"]),
         )
+        raw = _msg_content_to_str(getattr(msg, "content", None))
+
+        try:
+            data = json.loads(_extract_json(raw))
+        except json.JSONDecodeError as e:
+            logger.log(
+                "specialist_failed",
+                category=triage.category,
+                reason="invalid_json_response",
+                error=str(e),
+                raw_preview=raw[:800] if raw else "",
+            )
+            return SpecialistOutput(
+                draft=(
+                    "O modelo especialista não retornou um JSON válido. "
+                    "Redija a resposta manualmente usando as citações acima "
+                    "(erro técnico: resposta não parseável)."
+                ),
+                confidence=0.0,
+                requires_human_review=True,
+                rationale=f"Falha ao interpretar JSON do especialista: {e}",
+            )
+
+        try:
+            out = SpecialistOutput(
+                draft=str(data["draft"]),
+                confidence=float(data["confidence"]),
+                requires_human_review=bool(data["requires_human_review"]),
+                rationale=str(data["rationale"]),
+            )
+        except (KeyError, TypeError, ValueError) as e:
+            logger.log(
+                "specialist_failed",
+                category=triage.category,
+                reason="invalid_payload_shape",
+                error=str(e),
+                raw_preview=raw[:800] if raw else "",
+            )
+            return SpecialistOutput(
+                draft=(
+                    "O modelo retornou JSON com formato inesperado. "
+                    "Redija a resposta manualmente com base nas fontes citadas."
+                ),
+                confidence=0.0,
+                requires_human_review=True,
+                rationale=f"Campos esperados ausentes ou inválidos no JSON: {e}",
+            )
+
         logger.log(
             "specialist_result",
             category=triage.category,

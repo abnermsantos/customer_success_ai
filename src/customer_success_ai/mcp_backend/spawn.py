@@ -12,6 +12,8 @@ from urllib.parse import urlparse
 
 import httpx
 
+from customer_success_ai.observability import mcp_server_log_path
+
 _HEALTH_POLL_S = 0.25
 _HEALTH_TIMEOUT_S = 60.0
 
@@ -58,21 +60,26 @@ def _wait_for_mcp(mcp_url: str, *, timeout_s: float = _HEALTH_TIMEOUT_S) -> None
 
 
 def start_local_mcp_server(*, tickets_api_url: str, mcp_url: str) -> subprocess.Popen[bytes]:
-    host, port, _path = _parse_mcp_url(mcp_url)
-
     cmd = [sys.executable, "-m", "customer_success_ai.cli", "mcp"]
     env = os.environ.copy()
     env["TICKETS_API_URL"] = tickets_api_url
-    env["MCP_HOST"] = host
-    env["MCP_PORT"] = str(port)
+    env["MCP_URL"] = mcp_url
+    env["MCP_QUIET_LAUNCHER"] = "1"
+
+    log_path = mcp_server_log_path()
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    log_fp = log_path.open("a", encoding="utf-8")
     proc = subprocess.Popen(
         cmd,
         cwd=PathCwd.repo_root(),
         env=env,
-        stdout=subprocess.DEVNULL,
-        stderr=None,
+        stdout=log_fp,
+        stderr=subprocess.STDOUT,
         stdin=subprocess.DEVNULL,
+        close_fds=False,
     )
+    # Mantém FD aberto enquanto o filho existe; evita traceback no GC ao fechar cedo demais.
+    setattr(proc, "_mcp_stdout_fp", log_fp)
     return proc
 
 
@@ -111,7 +118,8 @@ def local_mcp_session(*, tickets_api_url: str, mcp_url: str):
             if proc is not None:
                 stop_process(proc)
             raise
-        print(f"Serving MCP backend via uvicorn: {mcp_url}")
+        log_path = mcp_server_log_path()
+        print(f"Serving MCP backend via uvicorn: {mcp_url} (log em {log_path})")
     try:
         yield proc
     finally:

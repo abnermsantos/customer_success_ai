@@ -10,6 +10,7 @@ from customer_success_ai.rag.retriever import retrieve_context
 from customer_success_ai.agents.kb_generator import generate_kb_article
 from customer_success_ai.agents.specialists import run_specialist
 from customer_success_ai.integrations.loader import create_kb_doc
+from customer_success_ai.agents.kb_doc_agent import generate_kb_article_with_tools, publish_kb_article_with_tools
 from customer_success_ai.memory.feedback import FeedbackMemory
 from customer_success_ai.triage.router import triage_ticket
 from customer_success_ai.workflow.state import WorkflowState
@@ -224,7 +225,7 @@ def _route_after_kb_offer(state: WorkflowState) -> str | object:
 
 def _node_kb_generator(state: WorkflowState, *, logger: JsonlLogger) -> WorkflowState:
     try:
-        state.kb_article_markdown = generate_kb_article(state, logger=logger)
+        state.kb_article_markdown = generate_kb_article_with_tools(state, logger=logger)
     except Exception as e:
         logger.log("kb_generation_failed", error=str(e), ticket_id=state.ticket["id"])
         state.kb_article_markdown = (
@@ -275,8 +276,12 @@ def _node_kb_persist(state: WorkflowState, *, logger: JsonlLogger, kb_create_url
         logger.log("kb_persist_skipped", reason="empty_or_no_frontmatter", ticket_id=state.ticket["id"])
         return state
     with StepTimer(logger, "kb_persist"):
-        out = create_kb_doc(kb_create_url, markdown=md, timeout=120.0)
-        logger.log("kb_persisted", **out)
+        # Persistência via tool-calling (kb.create_doc) — deve ocorrer apenas após validação humana aprovar.
+        out = publish_kb_article_with_tools(md, logger=logger)
+        if isinstance(out, dict):
+            logger.log("kb_persisted", **out)
+        else:
+            logger.log("kb_persisted", result=str(out))
     return state
 
 

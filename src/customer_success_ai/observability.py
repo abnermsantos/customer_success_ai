@@ -1,11 +1,19 @@
 from __future__ import annotations
 
 import json
+import os
 import time
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Mapping
+
+
+def mcp_server_log_path() -> Path:
+    """Arquivo texto para logs do processo MCP (uvicorn / stderr). Igual pasta do JSONL do app."""
+    log_dir = Path(os.getenv("LOG_DIR", ".logs"))
+    filename = os.getenv("MCP_SERVER_LOG", "mcp-server.log")
+    return log_dir / filename
 
 
 def _utc_now_iso() -> str:
