@@ -191,9 +191,23 @@ def build_mcp_server() -> FastMCP:
         return {"status": "ok"}
 
     @mcp.tool(name="tickets.history")
-    def tickets_history(timeout: float = 60.0) -> dict[str, Any]:
-        """Retorna o histórico de tickets (array na raiz) do serviço HTTP atual."""
-        history = http_fetch_tickets_history(cfg.tickets_historico_url, timeout=timeout)
+    def tickets_history(
+        *,
+        tipo: str | None = None,
+        status: str | None = None,
+        customer_id: str | None = None,
+        limit: int | None = None,
+        timeout: float = 60.0,
+    ) -> dict[str, Any]:
+        """Retorna histórico de tickets com filtros mecânicos opcionais."""
+        history = http_fetch_tickets_history(
+            cfg.tickets_historico_url,
+            timeout=timeout,
+            tipo=tipo,
+            status=status,
+            customer_id=customer_id,
+            limit=limit,
+        )
         return {"tickets": history, "count": len(history)}
 
     @mcp.tool(name="tickets.open_count")

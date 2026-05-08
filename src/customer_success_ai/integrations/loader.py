@@ -71,10 +71,27 @@ def create_kb_doc(url: str, *, markdown: str, timeout: float = 60.0) -> dict[str
     return data
 
 
-def fetch_tickets_history(url: str, *, timeout: float = 60.0) -> list[dict[str, Any]]:
-    """GET JSON: corpo deve ser a mesma lista de objetos que o arquivo mock (array na raiz)."""
+def fetch_tickets_history(
+    url: str,
+    *,
+    timeout: float = 60.0,
+    tipo: str | None = None,
+    status: str | None = None,
+    customer_id: str | None = None,
+    limit: int | None = None,
+) -> list[dict[str, Any]]:
+    """GET JSON via MCP: corpo é uma lista (array na raiz), com filtros opcionais."""
     _ = url  # Mantido por compatibilidade com chamadas atuais; MCP é o único caminho.
-    data = mcp_call_tool("tickets.history", {"timeout": float(timeout)})
+    data = mcp_call_tool(
+        "tickets.history",
+        {
+            "timeout": float(timeout),
+            "tipo": tipo,
+            "status": status,
+            "customer_id": customer_id,
+            "limit": limit,
+        },
+    )
     tickets = (data or {}).get("tickets", [])
     if not isinstance(tickets, list):
         raise ValueError("Histórico (via MCP): resposta deve conter tickets: array")

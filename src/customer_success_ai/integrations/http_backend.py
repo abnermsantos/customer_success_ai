@@ -73,9 +73,28 @@ def create_kb_doc(url: str, *, markdown: str, timeout: float = 60.0) -> dict[str
     return data
 
 
-def fetch_tickets_history(url: str, *, timeout: float = 60.0) -> list[dict[str, Any]]:
-    """GET JSON: corpo deve ser um array na raiz."""
-    req = Request(url, headers={"Accept": "application/json"}, method="GET")
+def fetch_tickets_history(
+    url: str,
+    *,
+    timeout: float = 60.0,
+    tipo: str | None = None,
+    status: str | None = None,
+    customer_id: str | None = None,
+    limit: int | None = None,
+) -> list[dict[str, Any]]:
+    """GET JSON: histórico de tickets (array na raiz), com filtros opcionais."""
+    params: dict[str, str] = {}
+    if tipo:
+        params["tipo"] = str(tipo)
+    if status:
+        params["status"] = str(status)
+    if customer_id:
+        params["id_cliente"] = str(customer_id)
+    if limit is not None:
+        params["limit"] = str(int(limit))
+
+    full = f"{url.rstrip('/')}" + ("" if not params else ("&" if "?" in url else "?") + urlencode(params))
+    req = Request(full, headers={"Accept": "application/json"}, method="GET")
     with urlopen(req, timeout=timeout) as resp:
         raw = resp.read().decode("utf-8")
     data = json.loads(raw)

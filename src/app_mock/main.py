@@ -7,6 +7,8 @@ from pathlib import Path
 from fastapi import APIRouter, Body, FastAPI, HTTPException
 from fastapi.responses import JSONResponse
 import yaml
+import numpy as np
+from langchain_huggingface import HuggingFaceEmbeddings
 
 # mocks/ fica na raíz do repo; este arquivo está em src/app_mock/
 _REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -56,8 +58,13 @@ def health() -> dict[str, str]:
 
 
 @tickets.get("/historico")
-def tickets_historico() -> JSONResponse:
-    """Corpo idêntico ao JSON de mock: array de tickets na raiz."""
+def tickets_historico(tipo: str = "", status: str = "", id_cliente: str = "", limit: int = 0) -> JSONResponse:
+    """Histórico de tickets (mock) com filtros mecânicos opcionais.
+    - tipo: filtra por igualdade (case-insensitive)
+    - status: filtra por igualdade (case-insensitive)
+    - id_cliente: filtra por igualdade
+    - limit: limita quantidade retornada (0 = sem limite)
+    """
     p = _payload_path()
     if not p.is_file():
         raise HTTPException(status_code=404, detail=f"Arquivo não encontrado: {p}")
@@ -68,8 +75,28 @@ def tickets_historico() -> JSONResponse:
         raise HTTPException(status_code=500, detail=f"JSON inválido em {p}: {e}") from e
     if not isinstance(data, list):
         raise HTTPException(status_code=500, detail="O arquivo deve ser um JSON array na raiz")
-    return JSONResponse(content=data)
-
+        return JSONResponse(content=data)
+    
+    tipo_n = (tipo or "").strip().lower()
+    status_n = (status or "").strip().lower()
+    cid = (id_cliente or "").strip()
+    lim = int(limit) if str(limit).strip() else 0
+    if lim < 0:
+        lim = 0
+    out: list[dict] = []
+    for t in data:
+        if not isinstance(t, dict):
+            continue
+        if tipo_n and str(t.get("tipo") or "").strip().lower() != tipo_n:
+            continue
+        if status_n and str(t.get("status") or "").strip().lower() != status_n:
+            continue
+        if cid and str(t.get("id_cliente") or "").strip() != cid:
+            continue
+        out.append(t)
+        if lim and len(out) >= lim:
+            break
+    return JSONResponse(content=out)
 
 @tickets.get("/open_count")
 def tickets_open_count(id_cliente: str = "") -> JSONResponse:

@@ -120,6 +120,10 @@ def _node_rag_and_draft(
     kb_search_url: str,
     tickets_historico_url: str,
 ) -> WorkflowState:
+    # Em loops de "corrigir", reaproveita as citações do estado para evitar recomputar RAG.
+    if state.hil_decision == "corrigir" and state.citations:
+        logger.log("rag_reused", reason="hil_correction_loop", citations=len(state.citations))
+        return state
     docs, citations = retrieve_context(state.ticket, kb_search_url=kb_search_url, tickets_historico_url=tickets_historico_url, logger=logger)
     state.citations = [c.__dict__ for c in citations]
     return state

@@ -124,10 +124,14 @@ def retrieve_context(
         )
         history = fetch_tickets_history(
             tickets_historico_url,
-            timeout=120.0
+            timeout=120.0,
+            tipo=str(ticket.get("tipo") or "").strip().lower() or None,
+            status="finalizado",
+            customer_id=None,
+            limit=800,
         )
-        docs = _split_docs(_kb_to_documents(kb_docs) + _tickets_to_documents(history))
 
+        docs = _split_docs(_kb_to_documents(kb_docs) + _tickets_to_documents(history))
         embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
         vs = FAISS.from_documents(docs, embeddings)
 
