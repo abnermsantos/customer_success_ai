@@ -4,6 +4,7 @@ from __future__ import annotations
 
 # Recursos relativos à base (ex.: http://localhost:8000/tickets → …/historico)
 HISTORICO = "historico"
+OPEN_COUNT = "open_count"
 
 
 def normalize_api_base(raw: str) -> str:
@@ -18,6 +19,11 @@ def endpoint_url(base: str, resource: str) -> str:
 
 def historico_url(base: str) -> str:
     return endpoint_url(base, HISTORICO)
+
+
+def open_count_url(base: str) -> str:
+    """Endpoint que retorna contagem de tickets vivos por id_cliente."""
+    return endpoint_url(base, OPEN_COUNT)
 
 
 def health_url(base: str) -> str:

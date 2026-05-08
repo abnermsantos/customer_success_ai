@@ -27,8 +27,10 @@ KBValidationDecision = Literal["aprovar", "rejeitar"]
 @dataclass
 class WorkflowState:
     ticket: Ticket
+    as_of_utc: str | None = None
     open_tickets_for_customer: int = 0
     is_sensitive: bool = False
+    customer_context: dict[str, Any] | None = None
     consulted_sources: list[dict[str, Any]] = field(default_factory=list)
     triage: TriageResult | None = None
     classification_error: str | None = None

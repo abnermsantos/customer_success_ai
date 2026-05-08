@@ -70,6 +70,32 @@ def tickets_historico() -> JSONResponse:
         raise HTTPException(status_code=500, detail="O arquivo deve ser um JSON array na raiz")
     return JSONResponse(content=data)
 
+
+@tickets.get("/open_count")
+def tickets_open_count(id_cliente: str = "") -> JSONResponse:
+    """Retorna a contagem de tickets 'vivos' para um id_cliente (status != finalizado)."""
+    cid = (id_cliente or "").strip()
+    if not cid:
+        raise HTTPException(status_code=400, detail="Parâmetro obrigatório: id_cliente")
+
+    p = _payload_path()
+    if not p.is_file():
+        raise HTTPException(status_code=404, detail=f"Arquivo não encontrado: {p}")
+    raw = p.read_text(encoding="utf-8")
+    try:
+        data = json.loads(raw)
+    except json.JSONDecodeError as e:
+        raise HTTPException(status_code=500, detail=f"JSON inválido em {p}: {e}") from e
+    if not isinstance(data, list):
+        raise HTTPException(status_code=500, detail="O arquivo deve ser um JSON array na raiz")
+
+    open_count = sum(
+        1
+        for t in data
+        if isinstance(t, dict) and t.get("id_cliente") == cid and t.get("status") != "finalizado"
+    )
+    return JSONResponse(content={"id_cliente": cid, "open_count": open_count})
+
 @kb.get("/health")
 def kb_health() -> dict[str, str]:
     return {"status": "ok"}

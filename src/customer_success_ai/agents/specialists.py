@@ -61,7 +61,7 @@ Você vai gerar uma resposta para o analista (não enviar ao cliente diretamente
 
 Regras:
 - Seja objetivo, orientado a ação.
-- Use APENAS as fontes fornecidas nas citações para afirmar fatos.
+- Use APENAS as fontes fornecidas nas citações e/ou no customer_context (CRM) para afirmar fatos.
 - Se faltar evidência nas fontes, peça ao analista os dados necessários (ex.: print do erro, linhas do extrato).
 - Retorne SOMENTE JSON válido com chaves:
   draft (string), confidence (float 0..1), requires_human_review (bool), rationale (string curta).
@@ -73,6 +73,8 @@ def run_specialist(
     *,
     triage: TriageResult,
     citations: list[dict[str, Any]],
+    customer_context: dict[str, Any] | None,
+    as_of_utc: str | None,
     is_sensitive: bool,
     logger: JsonlLogger,
     model: str = "gpt-4o-mini",
@@ -94,6 +96,8 @@ def run_specialist(
             },
             "triage": asdict(triage),
             "citations": citations,
+            "customer_context": customer_context,
+            "as_of_utc": as_of_utc,
             "is_sensitive": is_sensitive,
             "feedback_memory": feedback_memory or [],
         }

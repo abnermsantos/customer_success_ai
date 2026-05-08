@@ -15,32 +15,13 @@ from customer_success_ai.memory.feedback import FeedbackMemory
 from customer_success_ai.triage.router import enrich_ticket_from_triage, triage_ticket
 from customer_success_ai.triage.ticket_input import customer_id_from_name
 from customer_success_ai.integrations.loader import fetch_crm_customer_by_name
+from customer_success_ai.integrations.loader import fetch_open_tickets_count
 from customer_success_ai.workflow.state import WorkflowState
 
 
-def _count_open_tickets_for_customer(history: list[dict], customer_id: str) -> int:
-    # Regra acordada: todo ticket que não esteja "finalizado" é considerado vivo/aberto.
-    return sum(1 for t in history if t.get("id_cliente") == customer_id and t.get("status") != "finalizado")
-
-
-def _node_consult_mocks(
-    state: WorkflowState,
-    *,
-    logger: JsonlLogger,
-    load_history: Callable[[], list[dict[str, Any]]],
-) -> WorkflowState:
-    with StepTimer(logger, "consult_mocks"):
-        history = load_history()
-        open_count = _count_open_tickets_for_customer(history, state.ticket["id_cliente"])
-
-        state.open_tickets_for_customer = open_count
-        state.is_sensitive = open_count > 5
-        return state
-
-
-def _node_resolve_customer(state: WorkflowState, *, logger: JsonlLogger) -> WorkflowState:
-    """Resolve id_cliente via CRM (MCP) quando nome existe na base."""
-    with StepTimer(logger, "resolve_customer"):
+def load_customer_context(state: WorkflowState, *, logger: JsonlLogger) -> WorkflowState:
+    """Carrega contexto do cliente via tools (CRM + contagem de tickets vivos)."""
+    with StepTimer(logger, "load_customer_context"):
         nome = str(state.ticket.get("nome_cliente") or "").strip()
         if not nome:
             return state
@@ -53,21 +34,38 @@ def _node_resolve_customer(state: WorkflowState, *, logger: JsonlLogger) -> Work
         if not cust:
             # Cliente não existe na base: gera um id determinístico (somente nesse caso).
             if not str(state.ticket.get("id_cliente") or "").strip():
-                state.ticket["id_cliente"] = customer_id_from_name(nome)
-            logger.log("crm_lookup_miss", customer_name=nome, generated_id=state.ticket.get("id_cliente"))
-            return state
+                cid = customer_id_from_name(nome)
+                state.ticket["id_cliente"] = cid
+            logger.log("crm_lookup_miss", customer_name=nome, generated_id=cid)
+            open_count = 0
+            state.customer_context = None
+        else:
+            state.customer_context = cust
+            cid = str(cust.get("id_cliente") or "").strip()
+            cname = str(cust.get("nome") or "").strip() or nome
+            if not cid:
+                logger.log("crm_lookup_invalid", customer_name=nome, detail="id_cliente ausente")
+                return state
 
-        cid = str(cust.get("id_cliente") or "").strip()
-        cname = str(cust.get("nome") or "").strip() or nome
-        if not cid:
-            logger.log("crm_lookup_invalid", customer_name=nome, detail="id_cliente ausente")
-            return state
+            state.ticket["id_cliente"] = cid
+            state.ticket["nome_cliente"] = cname
+            logger.log("crm_lookup_hit", customer_name=nome, customer_id=cid, canonical_name=cname)
 
-        state.ticket["id_cliente"] = cid
-        state.ticket["nome_cliente"] = cname
-        logger.log("crm_lookup_hit", customer_name=nome, customer_id=cid, canonical_name=cname)
+            try:
+                open_count = fetch_open_tickets_count(cid)
+            except Exception as e:
+                logger.log("tickets_open_count_failed", error=str(e), customer_id=cid)
+                return state
+
+        state.open_tickets_for_customer = int(open_count)
+        state.is_sensitive = state.open_tickets_for_customer > 5
+        logger.log(
+            "tickets_open_count",
+            customer_id=cid,
+            open_tickets_for_customer=state.open_tickets_for_customer,
+            is_sensitive=state.is_sensitive,
+        )
         return state
-
 
 def _node_triage(state: WorkflowState, *, logger: JsonlLogger, feedback_memory: FeedbackMemory | None) -> WorkflowState:
     triage_fb = None
@@ -120,9 +118,9 @@ def _node_rag_and_draft(
     *,
     logger: JsonlLogger,
     kb_search_url: str,
-    load_history: Callable[[], list[dict[str, Any]]],
+    tickets_historico_url: str,
 ) -> WorkflowState:
-    docs, citations = retrieve_context(state.ticket, kb_search_url=kb_search_url, load_history=load_history, logger=logger)
+    docs, citations = retrieve_context(state.ticket, kb_search_url=kb_search_url, tickets_historico_url=tickets_historico_url, logger=logger)
     state.citations = [c.__dict__ for c in citations]
     return state
 
@@ -141,6 +139,8 @@ def _node_worker(state: WorkflowState, *, logger: JsonlLogger, feedback_memory: 
         state.ticket,
         triage=state.triage,
         citations=state.citations,
+        customer_context=state.customer_context,
+        as_of_utc=state.as_of_utc,
         is_sensitive=state.is_sensitive,
         logger=logger,
         feedback_memory=specialist_fb,
@@ -204,6 +204,25 @@ def _node_hil(state: WorkflowState, *, logger: JsonlLogger) -> WorkflowState:
             if choice in ("c", "corrigir"):
                 state.hil_decision = "corrigir"
                 state.hil_correction = input("Digite a correção do analista: ").strip()
+                # Importante: ao retornar para triagem, a correção precisa entrar no "ticket_text"
+                # para que triagem/especialistas refaçam o processo com o feedback humano.
+                corr = (state.hil_correction or "").strip()
+                if corr:
+                    base = (state.ticket.get("descricao") or "").strip()
+                    # Evita acumular correções duplicadas no loop.
+                    marker = "Correção do analista (HIL):"
+                    if marker in base:
+                        # Mantém apenas o texto anterior ao primeiro marker.
+                        base = base.split(marker, 1)[0].rstrip()
+                    state.ticket["descricao"] = (base + f"\n\n{marker}\n{corr}\n").strip()
+                # Zera campos derivados para forçar recomputar no reprocessamento.
+                state.triage = None
+                state.classification_error = None
+                state.citations = []
+                state.draft = ""
+                state.specialist = None
+                state.confidence = 0.0
+                state.requires_human_review = False
                 break
             print("Opção inválida. Tente novamente.")
 
@@ -213,7 +232,9 @@ def _node_hil(state: WorkflowState, *, logger: JsonlLogger) -> WorkflowState:
 
 def _route_after_hil(state: WorkflowState) -> str | object:
     """Só segue para oferta de KB se o analista aprovou o rascunho da resposta."""
-    if state.hil_decision != "aprovar":
+    if state.hil_decision == "corrigir":
+        return "triage"
+    if state.hil_decision == "rejeitar":
         return END
     return "hil_kb_offer"
 
@@ -328,7 +349,7 @@ def build_workflow_graph(
     logger: JsonlLogger,
     kb_search_url: str,
     kb_create_url: str,
-    load_history: Callable[[], list[dict[str, Any]]],
+    tickets_historico_url: str,
     feedback_memory: FeedbackMemory | None = None,
     checkpointer: Any | None = None,
     hil_mode: str = "interactive",
@@ -337,16 +358,12 @@ def build_workflow_graph(
     kb_validate: str | None = None,
 ):
     g = StateGraph(WorkflowState)
-    g.add_node("resolve_customer", lambda s: _node_resolve_customer(s, logger=logger))
-    g.add_node(
-        "consult_mocks",
-        lambda s: _node_consult_mocks(s, logger=logger, load_history=load_history),
-    )
+    g.add_node("load_customer_context", lambda s: load_customer_context(s, logger=logger))
     g.add_node("triage", lambda s: _node_triage(s, logger=logger, feedback_memory=feedback_memory))
     g.add_node("human_direct", lambda s: _node_human_direct(s, logger=logger))
     g.add_node(
         "rag_and_draft",
-        lambda s: _node_rag_and_draft(s, logger=logger, kb_search_url=kb_search_url, load_history=load_history),
+        lambda s: _node_rag_and_draft(s, logger=logger, kb_search_url=kb_search_url, tickets_historico_url=tickets_historico_url),
     )
     g.add_node("worker_tecnica", lambda s: _node_worker(s, logger=logger, feedback_memory=feedback_memory))
     g.add_node("worker_comercial", lambda s: _node_worker(s, logger=logger, feedback_memory=feedback_memory))
@@ -390,9 +407,8 @@ def build_workflow_graph(
     g.add_node("kb_generator", kb_gen_node)
     g.add_node("hil_kb_validate", kb_validate_node)
     g.add_node("kb_persist", lambda s: _node_kb_persist(s, logger=logger, kb_create_url=kb_create_url))
-    g.set_entry_point("resolve_customer")
-    g.add_edge("resolve_customer", "consult_mocks")
-    g.add_edge("consult_mocks", "triage")
+    g.set_entry_point("load_customer_context")
+    g.add_edge("load_customer_context", "triage")
     g.add_conditional_edges("triage", _route_after_triage)
     g.add_edge("human_direct", "hil")
     g.add_conditional_edges("rag_and_draft", _route_by_category)

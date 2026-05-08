@@ -11,7 +11,7 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain_openai import ChatOpenAI
 
-from customer_success_ai.integrations.loader import KbDoc, fetch_kb_search
+from customer_success_ai.integrations.loader import KbDoc, fetch_kb_search, fetch_tickets_history
 from customer_success_ai.observability import JsonlLogger, StepTimer
 from customer_success_ai.rag.models import Citation
 from customer_success_ai.workflow.state import Ticket
@@ -111,7 +111,7 @@ def retrieve_context(
     ticket: Ticket,
     *,
     kb_search_url: str,
-    load_history: Callable[[], list[dict[str, Any]]],
+    tickets_historico_url: str,
     logger: JsonlLogger,
     top_k: int = 5,
 ) -> tuple[list[Document], list[Citation]]:
@@ -122,7 +122,10 @@ def retrieve_context(
             limit=50,
             timeout=120.0,
         )
-        history = load_history()
+        history = fetch_tickets_history(
+            tickets_historico_url,
+            timeout=120.0
+        )
         docs = _split_docs(_kb_to_documents(kb_docs) + _tickets_to_documents(history))
 
         embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")

@@ -84,6 +84,25 @@ def fetch_tickets_history(url: str, *, timeout: float = 60.0) -> list[dict[str, 
     return [x for x in data if isinstance(x, dict)]
 
 
+def fetch_open_tickets_count(url: str, *, customer_id: str, timeout: float = 30.0) -> int:
+    """GET JSON: retorna open_count (int) via /tickets/open_count?id_cliente=..."""
+    cid = (customer_id or "").strip()
+    if not cid:
+        raise ValueError("open_count: customer_id não pode ser vazio")
+    full = f"{url.rstrip('/')}" + ("" if "?" in url else f"?{urlencode({'id_cliente': cid})}")
+    req = Request(full, headers={"Accept": "application/json"}, method="GET")
+    with urlopen(req, timeout=timeout) as resp:
+        raw = resp.read().decode("utf-8")
+    data = json.loads(raw)
+    if not isinstance(data, dict):
+        raise ValueError("open_count: resposta JSON deve ser um objeto")
+    oc = data.get("open_count")
+    try:
+        return int(oc)
+    except (TypeError, ValueError) as e:
+        raise ValueError(f"open_count inválido: {oc!r}") from e
+
+
 def fetch_crm_customer_by_name(url: str, *, name: str, timeout: float = 30.0) -> dict[str, Any] | None:
     """GET JSON: retorna dict do cliente, ou None em caso de 404."""
     q = (name or "").strip()

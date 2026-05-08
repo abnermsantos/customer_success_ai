@@ -45,6 +45,7 @@ class SQLiteRunStorage:
                 CREATE TABLE IF NOT EXISTS runs (
                   run_id TEXT PRIMARY KEY,
                   created_at_utc TEXT NOT NULL,
+                  as_of_utc TEXT,
                   ticket_id TEXT NOT NULL,
                   customer_id TEXT NOT NULL,
                   customer_name TEXT,
@@ -115,6 +116,12 @@ class SQLiteRunStorage:
                 CREATE INDEX IF NOT EXISTS idx_feedback_category ON feedback_memory(category);
                 """
             )
+            # Migração simples: adiciona coluna `as_of_utc` em bases existentes.
+            try:
+                conn.execute("ALTER TABLE runs ADD COLUMN as_of_utc TEXT")
+            except sqlite3.OperationalError:
+                # Coluna já existe (ou tabela não existe em casos raros).
+                pass
 
     def save_run(self, *, run_id: str, created_at_utc: str, state: WorkflowState) -> None:
         t = state.ticket
@@ -127,17 +134,18 @@ class SQLiteRunStorage:
             conn.execute(
                 """
                 INSERT OR REPLACE INTO runs(
-                  run_id, created_at_utc,
+                  run_id, created_at_utc, as_of_utc,
                   ticket_id, customer_id, customer_name, ticket_title, ticket_text,
                   ticket_raw_json, classification_error,
                   specialist, draft_final, confidence,
                   requires_human_review, is_sensitive, open_tickets_for_customer
                 )
-                VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
                 """,
                 (
                     run_id,
                     created_at_utc,
+                    state.as_of_utc,
                     t["id"],
                     t["id_cliente"],
                     t.get("nome_cliente"),
@@ -223,10 +231,14 @@ class SQLiteRunStorage:
 
     def get_run(self, run_id: str) -> PersistedRun | None:
         with self._connect() as conn:
-            row = conn.execute("SELECT run_id, created_at_utc, ticket_raw_json FROM runs WHERE run_id = ?", (run_id,)).fetchone()
+            row = conn.execute(
+                "SELECT run_id, created_at_utc, as_of_utc, ticket_raw_json FROM runs WHERE run_id = ?",
+                (run_id,),
+            ).fetchone()
             if not row:
                 return None
             state: dict[str, Any] = {"ticket": json.loads(row["ticket_raw_json"])}
+            state["as_of_utc"] = row["as_of_utc"]
 
             t_row = conn.execute("SELECT * FROM triage WHERE run_id = ?", (run_id,)).fetchone()
             if t_row:

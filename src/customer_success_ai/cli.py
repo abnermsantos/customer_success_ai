@@ -160,13 +160,12 @@ def _invoke_workflow(
         raise SystemExit("Defina MCP_URL no ambiente (ex.: http://127.0.0.1:8000/mcp).")
 
     def _run_graph():
-        load_history = tickets_historico_loader(config.tickets_historico_url)
         with SqliteSaver.from_conn_string(str(config.checkpoints_db_path)) as checkpointer:
             graph = build_workflow_graph(
                 logger=logger,
                 kb_search_url=config.kb_search_url,
                 kb_create_url=config.kb_create_url,
-                load_history=load_history,
+                tickets_historico_url=config.tickets_historico_url,
                 feedback_memory=feedback_memory,
                 checkpointer=checkpointer,
                 hil_mode=hil_mode,
@@ -175,7 +174,7 @@ def _invoke_workflow(
                 kb_validate=kb_validate,
             )
             cfg = {"configurable": {"thread_id": thread_id}}
-            return graph.invoke(WorkflowState(ticket=ticket), cfg)
+            return graph.invoke(WorkflowState(ticket=ticket, as_of_utc=_utc_now_iso()), cfg)
 
     # Ordem correta em dev local:
     # 1) subir backend HTTP (tickets+kb mock) se aplicável

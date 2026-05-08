@@ -17,12 +17,13 @@ import yaml
 from customer_success_ai.integrations.http_backend import create_kb_doc as http_create_kb_doc
 from customer_success_ai.integrations.http_backend import fetch_crm_customer_by_name as http_fetch_crm_customer_by_name
 from customer_success_ai.integrations.http_backend import fetch_kb_search as http_fetch_kb_search
+from customer_success_ai.integrations.http_backend import fetch_open_tickets_count as http_fetch_open_tickets_count
 from customer_success_ai.integrations.http_backend import fetch_tickets_history as http_fetch_tickets_history
 from customer_success_ai.integrations.crm_api import clientes_url as crm_clientes_url
 from customer_success_ai.integrations.kb_api import create_doc_url as kb_create_doc_url
 from customer_success_ai.integrations.kb_api import normalize_api_base as normalize_kb_base
 from customer_success_ai.integrations.kb_api import search_url as kb_search_url
-from customer_success_ai.integrations.tickets_api import health_url, historico_url, normalize_api_base
+from customer_success_ai.integrations.tickets_api import health_url, historico_url, normalize_api_base, open_count_url
 from customer_success_ai.observability import mcp_server_log_path
 
 
@@ -31,6 +32,7 @@ class McpBackendConfig:
     tickets_api_base: str
     tickets_historico_url: str
     tickets_health_url: str
+    tickets_open_count_url: str
     kb_api_base: str
     kb_search_url: str
     kb_create_url: str
@@ -68,6 +70,7 @@ def _load_backend_config() -> McpBackendConfig:
         tickets_api_base=base,
         tickets_historico_url=historico_url(base),
         tickets_health_url=health_url(base),
+        tickets_open_count_url=open_count_url(base),
         kb_api_base=kb_base,
         kb_search_url=kb_search_url(kb_base),
         kb_create_url=kb_create_doc_url(kb_base),
@@ -192,6 +195,12 @@ def build_mcp_server() -> FastMCP:
         """Retorna o histórico de tickets (array na raiz) do serviço HTTP atual."""
         history = http_fetch_tickets_history(cfg.tickets_historico_url, timeout=timeout)
         return {"tickets": history, "count": len(history)}
+
+    @mcp.tool(name="tickets.open_count")
+    def tickets_open_count(customer_id: str, timeout: float = 30.0) -> dict[str, Any]:
+        """Retorna a contagem de tickets vivos para um id_cliente."""
+        open_count = http_fetch_open_tickets_count(cfg.tickets_open_count_url, customer_id=customer_id, timeout=timeout)
+        return {"customer_id": customer_id, "open_count": open_count}
 
     # -------- kb.* --------
     @mcp.tool(name="kb.search")
