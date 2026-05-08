@@ -55,6 +55,35 @@ flowchart TD
     Analista1 -- "Corrigir resposta" --> Router
 ```
 
+Detalhamentos:
+
+```mermaid
+flowchart TB
+    S_Router["<b>[Router Specialist]</b><br>- Resp: Triagem e Intenção<br>- Tools: Enriquecer, Classificar<br>- Delega: Se tipo for claro<br>- Escala: Se intenção ambígua<br>- Memória: Stateless"] -.-> Router{"Router"}
+    S_Tec@{ label: "<b>[Technical Agent]</b><br>- Resp: Debug e Solução Técnica<br>- Tools: Jira API, MCP (Wiki), RAG<br>- Delega: Se não encontrar solução<br style=\"--tw-border-spacing-y:\">- Escala: Se confiança for baixa ou prioridade altíssima<br>- Memória: Stateless" } -.-> A_Tec["Agentes Especialistas"]
+    S_Doc["<b>[Documentation Agent]</b><br>- Resp: Síntese de Knowledge Base<br>- Tools: MCP (KB Writer), Summarizer<br>- Delega: Nó Final<br>- Escala: Requer HIL para publicação<br>- Memória: Long-term (History to KB)"] -.-> A_Doc["Agente de Documentação"]
+    Router --> A_Tec
+    A_Tec --> HIL1{{"HIL 1: Resposta"}}
+    HIL1 --> A_Doc
+    Justification@{ label: "<b>LANGGRAPH (Orquestrador)</b><br><br>    1. <b>Ciclos e Persistência:</b> Suporte nativo a loops e salvamento de estado (Checkpoints).<br><br>    2. <b>HIL Nativo:</b> Capacidade de interromper o grafo para validação humana sem perda de contexto.<br><br>    3. <b>Controle de Grafo:</b> Gestão precisa de estados complexos onde o ticket pode 'voltar' etapas.<br><br>    4. <b>Thread Management:</b> Facilidade em isolar turnos de conversa por identificadores únicos." }
+
+    S_Tec@{ shape: rect}
+    Justification@{ shape: rect}
+     S_Router:::spec
+     Router:::worker
+     S_Tec:::spec
+     A_Tec:::worker
+     S_Doc:::spec
+     A_Doc:::worker
+     HIL1:::hil
+     Justification:::justification
+    classDef worker fill:#f0f7ff,stroke:#0077b6,color:#444
+    classDef hil fill:#fffef0,stroke:#d4a017,color:#444,stroke-width:3px
+    classDef alert fill:#fff1f0,stroke:#cf1322,color:#444,stroke-dasharray: 5 5
+    classDef spec fill:#ffffff,stroke:#999,font-size:11px
+    classDef justification fill:#f8f9fa,stroke:#444,stroke-width:2px,font-size:12px
+```
+
 1. **CLI** (`src/customer_success_ai/cli.py`): carrega configuração, orquestra (opcionalmente) o **mock HTTP** e o **servidor MCP**, depois invoca o grafo LangGraph.
 2. **App mock (FastAPI)** (`src/app_mock/main.py`): expõe as rotas HTTP que simulam o CRM/tickets e a KB para desenvolvimento; lê arquivos em `mocks/`.
 3. **Backend MCP** (`src/customer_success_ai/mcp_backend/server.py`): expõe ferramentas estáveis para utilização dos agentes
@@ -69,7 +98,7 @@ flowchart TD
 |------|----------------------|
 | Orquestração de agentes | **LangGraph** (StateGraph, rotas condicionais, checkpointing) |
 | LLM | **LangChain** + **langchain-openai** (triagem e especialistas) |
-| RAG | **langchain-huggingface** + **FAISS** + **Re-ranking** + **Metadata** |
+| RAG | **langchain-huggingface** + **FAISS** + **Re-ranking** + **Filtro por Metadados** |
 | Contrato com ferramentas | **MCP** (`mcp`, `FastMCP`, `HTTP streamable`) |
 | APIs mock e HTTP | **FastAPI**, **Uvicorn** |
 | Configuração | **python-dotenv**, variáveis de ambiente (`.env`) |
