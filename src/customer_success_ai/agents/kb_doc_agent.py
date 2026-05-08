@@ -126,7 +126,6 @@ def generate_kb_article_with_tools(
                         break
 
             if not ok:
-                # Sem fallback de tool: apenas exige que o modelo valide.
                 messages = messages + [
                     HumanMessage(
                         content=(
@@ -137,7 +136,6 @@ def generate_kb_article_with_tools(
                 ]
                 return {"messages": messages}
 
-            # Validado: manter última AI como resposta final.
             logger.log("kb_article_generated", chars=len(md), ticket_id=state.ticket["id"])
             return {"messages": messages}
 

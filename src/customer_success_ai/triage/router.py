@@ -119,7 +119,7 @@ def enrich_ticket_from_triage(ticket: Ticket, triage: TriageResult) -> Ticket:
         if (triage.ticket_titulo and triage.ticket_titulo.strip())
         else _fallback_titulo_from_descricao(ticket["descricao"])
     )
-    return merged  # type: ignore[return-value]
+    return merged
 
 
 def triage_ticket(

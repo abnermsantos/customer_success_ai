@@ -11,7 +11,6 @@ from dotenv import load_dotenv
 from langgraph.checkpoint.sqlite import SqliteSaver
 
 from customer_success_ai.config import AppConfig
-from customer_success_ai.integrations.loader import tickets_historico_loader
 from customer_success_ai.observability import JsonlLogger, StepTimer
 from urllib.parse import urlparse
 
@@ -163,9 +162,6 @@ def _invoke_workflow(
         with SqliteSaver.from_conn_string(str(config.checkpoints_db_path)) as checkpointer:
             graph = build_workflow_graph(
                 logger=logger,
-                kb_search_url=config.kb_search_url,
-                kb_create_url=config.kb_create_url,
-                tickets_historico_url=config.tickets_historico_url,
                 feedback_memory=feedback_memory,
                 checkpointer=checkpointer,
                 hil_mode=hil_mode,

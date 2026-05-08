@@ -19,11 +19,9 @@ async def _call_tool_async(url: str, name: str, arguments: dict[str, Any] | None
             async with ClientSession(read_stream, write_stream) as session:
                 await session.initialize()
                 res = await session.call_tool(name, arguments=arguments or {})
-                # Prefer structured content when available (JSON-native).
                 if res.structuredContent is not None:
                     return res.structuredContent
 
-                # Fallback: concat text blocks.
                 texts: list[str] = []
                 for c in res.content:
                     t = getattr(c, "text", None)

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
@@ -17,9 +16,7 @@ class KbDoc:
     source_path: str
     content: str
 
-
 def fetch_kb_search(
-    url: str,
     *,
     category: str,
     q: str = "",
@@ -27,7 +24,6 @@ def fetch_kb_search(
     timeout: float = 60.0,
 ) -> list[KbDoc]:
     """GET JSON: lista de KB docs (dicts) retornada por /kb/search."""
-    _ = url  # Mantido por compatibilidade com chamadas atuais; MCP é o único caminho.
     data = mcp_call_tool(
         "kb.search",
         {
@@ -55,24 +51,7 @@ def fetch_kb_search(
         )
     return docs
 
-
-def create_kb_doc(url: str, *, markdown: str, timeout: float = 60.0) -> dict[str, Any]:
-    """POST JSON para /kb/docs para persistir um novo arquivo .md."""
-    _ = url  # Mantido por compatibilidade com chamadas atuais; MCP é o único caminho.
-    data = mcp_call_tool(
-        "kb.create_doc",
-        {
-            "markdown": markdown,
-            "timeout": float(timeout),
-        },
-    )
-    if not isinstance(data, dict):
-        raise ValueError("KB create (via MCP): resposta deve ser um objeto JSON")
-    return data
-
-
 def fetch_tickets_history(
-    url: str,
     *,
     timeout: float = 60.0,
     tipo: str | None = None,
@@ -81,7 +60,6 @@ def fetch_tickets_history(
     limit: int | None = None,
 ) -> list[dict[str, Any]]:
     """GET JSON via MCP: corpo é uma lista (array na raiz), com filtros opcionais."""
-    _ = url  # Mantido por compatibilidade com chamadas atuais; MCP é o único caminho.
     data = mcp_call_tool(
         "tickets.history",
         {
@@ -120,16 +98,3 @@ def fetch_crm_customer_by_name(name: str, *, timeout: float = 30.0) -> dict[str,
     if data.get("found") is True and isinstance(data.get("customer"), dict):
         return data["customer"]
     return None
-
-
-def tickets_historico_loader(historico_url: str) -> Callable[[], list[dict[str, Any]]]:
-    u = historico_url.strip()
-
-    def _from_api() -> list[dict[str, Any]]:
-        try:
-            return fetch_tickets_history(u)
-        except Exception as e:
-            raise RuntimeError(f"Falha ao obter histórico de tickets via MCP (url={u!r}): {e}") from e
-
-    return _from_api
-

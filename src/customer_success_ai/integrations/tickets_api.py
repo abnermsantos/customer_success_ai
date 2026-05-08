@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-# Recursos relativos à base (ex.: http://localhost:8000/tickets → …/historico)
 HISTORICO = "historico"
 OPEN_COUNT = "open_count"
 

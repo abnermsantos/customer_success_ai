@@ -1,15 +1,10 @@
 from __future__ import annotations
-
-from collections.abc import Callable
-from pathlib import Path
 from typing import Any
 
 from langgraph.graph import END, StateGraph
 from customer_success_ai.observability import JsonlLogger, StepTimer
 from customer_success_ai.rag.retriever import retrieve_context
-from customer_success_ai.agents.kb_generator import generate_kb_article
 from customer_success_ai.agents.specialists import run_specialist
-from customer_success_ai.integrations.loader import create_kb_doc
 from customer_success_ai.agents.kb_doc_agent import generate_kb_article_with_tools, publish_kb_article_with_tools
 from customer_success_ai.memory.feedback import FeedbackMemory
 from customer_success_ai.triage.router import enrich_ticket_from_triage, triage_ticket
@@ -116,15 +111,13 @@ def _node_human_direct(state: WorkflowState, *, logger: JsonlLogger) -> Workflow
 def _node_rag_and_draft(
     state: WorkflowState,
     *,
-    logger: JsonlLogger,
-    kb_search_url: str,
-    tickets_historico_url: str,
+    logger: JsonlLogger
 ) -> WorkflowState:
     # Em loops de "corrigir", reaproveita as citações do estado para evitar recomputar RAG.
     if state.hil_decision == "corrigir" and state.citations:
         logger.log("rag_reused", reason="hil_correction_loop", citations=len(state.citations))
         return state
-    docs, citations = retrieve_context(state.ticket, kb_search_url=kb_search_url, tickets_historico_url=tickets_historico_url, logger=logger)
+    docs, citations = retrieve_context(state.ticket, logger=logger)
     state.citations = [c.__dict__ for c in citations]
     return state
 
@@ -327,7 +320,7 @@ def _node_hil_kb_validate(
     return state
 
 
-def _node_kb_persist(state: WorkflowState, *, logger: JsonlLogger, kb_create_url: str) -> WorkflowState:
+def _node_kb_persist(state: WorkflowState, *, logger: JsonlLogger) -> WorkflowState:
     md = state.kb_article_markdown or ""
     if not md.strip().startswith("---"):
         logger.log("kb_persist_skipped", reason="empty_or_no_frontmatter", ticket_id=state.ticket["id"])
@@ -351,9 +344,6 @@ def _route_after_kb_validate(state: WorkflowState) -> str | object:
 def build_workflow_graph(
     *,
     logger: JsonlLogger,
-    kb_search_url: str,
-    kb_create_url: str,
-    tickets_historico_url: str,
     feedback_memory: FeedbackMemory | None = None,
     checkpointer: Any | None = None,
     hil_mode: str = "interactive",
@@ -367,7 +357,7 @@ def build_workflow_graph(
     g.add_node("human_direct", lambda s: _node_human_direct(s, logger=logger))
     g.add_node(
         "rag_and_draft",
-        lambda s: _node_rag_and_draft(s, logger=logger, kb_search_url=kb_search_url, tickets_historico_url=tickets_historico_url),
+        lambda s: _node_rag_and_draft(s, logger=logger),
     )
     g.add_node("worker_tecnica", lambda s: _node_worker(s, logger=logger, feedback_memory=feedback_memory))
     g.add_node("worker_comercial", lambda s: _node_worker(s, logger=logger, feedback_memory=feedback_memory))
@@ -410,7 +400,7 @@ def build_workflow_graph(
     g.add_node("hil_kb_offer", kb_offer_node)
     g.add_node("kb_generator", kb_gen_node)
     g.add_node("hil_kb_validate", kb_validate_node)
-    g.add_node("kb_persist", lambda s: _node_kb_persist(s, logger=logger, kb_create_url=kb_create_url))
+    g.add_node("kb_persist", lambda s: _node_kb_persist(s, logger=logger))
     g.set_entry_point("load_customer_context")
     g.add_edge("load_customer_context", "triage")
     g.add_conditional_edges("triage", _route_after_triage)

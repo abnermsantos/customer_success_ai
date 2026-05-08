@@ -7,8 +7,6 @@ from pathlib import Path
 from fastapi import APIRouter, Body, FastAPI, HTTPException
 from fastapi.responses import JSONResponse
 import yaml
-import numpy as np
-from langchain_huggingface import HuggingFaceEmbeddings
 
 # mocks/ fica na raíz do repo; este arquivo está em src/app_mock/
 _REPO_ROOT = Path(__file__).resolve().parents[2]

@@ -67,7 +67,6 @@ Regras:
   draft (string), confidence (float 0..1), requires_human_review (bool), rationale (string curta).
 """
 
-
 def run_specialist(
     ticket: Ticket,
     *,
@@ -163,4 +162,3 @@ def run_specialist(
             requires_human_review=out.requires_human_review,
         )
         return out
-

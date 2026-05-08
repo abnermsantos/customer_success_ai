@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-from collections.abc import Callable
 from dataclasses import asdict
 from typing import Any
 
@@ -36,7 +35,6 @@ def _kb_to_documents(kb_docs: list[KbDoc]) -> list[Document]:
         )
     return docs
 
-
 def _tickets_to_documents(history: list[dict[str, Any]]) -> list[Document]:
     docs: list[Document] = []
     for t in history:
@@ -57,11 +55,9 @@ def _tickets_to_documents(history: list[dict[str, Any]]) -> list[Document]:
         )
     return docs
 
-
 def _split_docs(docs: list[Document]) -> list[Document]:
     splitter = RecursiveCharacterTextSplitter(chunk_size=800, chunk_overlap=120)
     return splitter.split_documents(docs)
-
 
 def _rerank_with_llm(query: str, candidates: list[Document], *, logger: JsonlLogger, model: str = "gpt-4o-mini") -> list[Document]:
     """Re-ranking (técnica avançada) via LLM, retornando candidatos ordenados."""
@@ -106,24 +102,19 @@ def _rerank_with_llm(query: str, candidates: list[Document], *, logger: JsonlLog
         logger.log("rerank_done", candidates=len(candidates), returned=len(ranked))
         return ranked
 
-
 def retrieve_context(
     ticket: Ticket,
     *,
-    kb_search_url: str,
-    tickets_historico_url: str,
     logger: JsonlLogger,
     top_k: int = 5,
 ) -> tuple[list[Document], list[Citation]]:
     with StepTimer(logger, "rag_retrieve"):
         kb_docs = fetch_kb_search(
-            kb_search_url,
             category=str(ticket.get("tipo") or "").strip().lower(),
             limit=50,
             timeout=120.0,
         )
         history = fetch_tickets_history(
-            tickets_historico_url,
             timeout=120.0,
             tipo=str(ticket.get("tipo") or "").strip().lower() or None,
             status="finalizado",
@@ -158,4 +149,3 @@ def retrieve_context(
             selected=[asdict(c) for c in citations],
         )
         return final_docs, citations
-

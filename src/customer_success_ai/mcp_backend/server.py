@@ -6,7 +6,6 @@ from pathlib import Path
 import os
 import re
 from dataclasses import dataclass
-from datetime import date
 from typing import Any
 from urllib.parse import urlparse
 
@@ -131,7 +130,7 @@ def build_mcp_server() -> FastMCP:
                 "extracted": {},
             }
 
-        # Campos obrigatórios do padrão atual (ver kb_generator.py)
+        # Campos obrigatórios do padrão atual
         required = ["id", "title", "category", "tags", "module", "audience", "created_at", "updated_at", "author"]
         for k in required:
             if k not in fm or fm.get(k) in (None, "", []):
@@ -184,12 +183,6 @@ def build_mcp_server() -> FastMCP:
         }
 
     # -------- tickets.* --------
-    @mcp.tool(name="tickets.health")
-    def tickets_health() -> dict[str, str]:
-        """Healthcheck do serviço de tickets (mock/real) por HTTP."""
-        # O mock retorna {"status":"ok"}; padronizamos.
-        return {"status": "ok"}
-
     @mcp.tool(name="tickets.history")
     def tickets_history(
         *,
@@ -346,8 +339,6 @@ def main() -> None:
     sys.stderr = stdio_sink
 
     mcp = build_mcp_server()
-    # App streamable HTTP do SDK já expõe o endpoint em /mcp (não montar em /mcp).
-    # Logs no arquivo (LOG_DIR/MCP_SERVER_LOG), não no console.
     uvicorn.run(
         mcp.streamable_http_app(),
         host=host,
