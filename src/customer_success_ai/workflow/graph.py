@@ -13,6 +13,8 @@ from customer_success_ai.integrations.loader import create_kb_doc
 from customer_success_ai.agents.kb_doc_agent import generate_kb_article_with_tools, publish_kb_article_with_tools
 from customer_success_ai.memory.feedback import FeedbackMemory
 from customer_success_ai.triage.router import enrich_ticket_from_triage, triage_ticket
+from customer_success_ai.triage.ticket_input import customer_id_from_name
+from customer_success_ai.integrations.loader import fetch_crm_customer_by_name
 from customer_success_ai.workflow.state import WorkflowState
 
 
@@ -32,9 +34,38 @@ def _node_consult_mocks(
         open_count = _count_open_tickets_for_customer(history, state.ticket["id_cliente"])
 
         state.open_tickets_for_customer = open_count
-        # Regra inicial (provisória): sensível quando o cliente possui qualquer ticket vivo.
-        # Quando definirmos "top N / limiar X", substituímos aqui.
-        state.is_sensitive = open_count > 0
+        state.is_sensitive = open_count > 5
+        return state
+
+
+def _node_resolve_customer(state: WorkflowState, *, logger: JsonlLogger) -> WorkflowState:
+    """Resolve id_cliente via CRM (MCP) quando nome existe na base."""
+    with StepTimer(logger, "resolve_customer"):
+        nome = str(state.ticket.get("nome_cliente") or "").strip()
+        if not nome:
+            return state
+        try:
+            cust = fetch_crm_customer_by_name(nome)
+        except Exception as e:
+            logger.log("crm_lookup_failed", error=str(e), customer_name=nome)
+            return state
+
+        if not cust:
+            # Cliente não existe na base: gera um id determinístico (somente nesse caso).
+            if not str(state.ticket.get("id_cliente") or "").strip():
+                state.ticket["id_cliente"] = customer_id_from_name(nome)
+            logger.log("crm_lookup_miss", customer_name=nome, generated_id=state.ticket.get("id_cliente"))
+            return state
+
+        cid = str(cust.get("id_cliente") or "").strip()
+        cname = str(cust.get("nome") or "").strip() or nome
+        if not cid:
+            logger.log("crm_lookup_invalid", customer_name=nome, detail="id_cliente ausente")
+            return state
+
+        state.ticket["id_cliente"] = cid
+        state.ticket["nome_cliente"] = cname
+        logger.log("crm_lookup_hit", customer_name=nome, customer_id=cid, canonical_name=cname)
         return state
 
 
@@ -306,6 +337,7 @@ def build_workflow_graph(
     kb_validate: str | None = None,
 ):
     g = StateGraph(WorkflowState)
+    g.add_node("resolve_customer", lambda s: _node_resolve_customer(s, logger=logger))
     g.add_node(
         "consult_mocks",
         lambda s: _node_consult_mocks(s, logger=logger, load_history=load_history),
@@ -358,7 +390,8 @@ def build_workflow_graph(
     g.add_node("kb_generator", kb_gen_node)
     g.add_node("hil_kb_validate", kb_validate_node)
     g.add_node("kb_persist", lambda s: _node_kb_persist(s, logger=logger, kb_create_url=kb_create_url))
-    g.set_entry_point("consult_mocks")
+    g.set_entry_point("resolve_customer")
+    g.add_edge("resolve_customer", "consult_mocks")
     g.add_edge("consult_mocks", "triage")
     g.add_conditional_edges("triage", _route_after_triage)
     g.add_edge("human_direct", "hil")

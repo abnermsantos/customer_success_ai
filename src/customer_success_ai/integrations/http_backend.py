@@ -5,6 +5,8 @@ from dataclasses import dataclass
 from typing import Any
 from urllib.request import Request, urlopen
 
+from urllib.parse import urlencode
+
 
 @dataclass(frozen=True)
 class KbDoc:
@@ -26,8 +28,6 @@ def fetch_kb_search(
     timeout: float = 60.0,
 ) -> list[KbDoc]:
     """GET JSON: lista de KB docs (dicts) retornada por /kb/search."""
-    from urllib.parse import urlencode
-
     params = urlencode({"category": category, "q": q, "limit": str(limit)})
     full = f"{url.rstrip('/')}" + ("" if "?" in url else f"?{params}")
     req = Request(full, headers={"Accept": "application/json"}, method="GET")
@@ -82,4 +82,28 @@ def fetch_tickets_history(url: str, *, timeout: float = 60.0) -> list[dict[str, 
     if not isinstance(data, list):
         raise ValueError("Histórico de tickets: resposta JSON deve ser um array na raiz")
     return [x for x in data if isinstance(x, dict)]
+
+
+def fetch_crm_customer_by_name(url: str, *, name: str, timeout: float = 30.0) -> dict[str, Any] | None:
+    """GET JSON: retorna dict do cliente, ou None em caso de 404."""
+    q = (name or "").strip()
+    if not q:
+        raise ValueError("CRM: name não pode ser vazio")
+
+    full = f"{url.rstrip('/')}" + ("" if "?" in url else f"?{urlencode({'nome': q})}")
+    req = Request(full, headers={"Accept": "application/json"}, method="GET")
+    try:
+        with urlopen(req, timeout=timeout) as resp:
+            raw = resp.read().decode("utf-8")
+    except Exception as e:  # noqa: BLE001 - compat com URLError/HTTPError sem importar
+        # HTTPError em urllib expõe .code; tratamos 404 como "não encontrado".
+        code = getattr(e, "code", None)
+        if code == 404:
+            return None
+        raise
+
+    data = json.loads(raw)
+    if not isinstance(data, dict):
+        raise ValueError("CRM: resposta JSON deve ser um objeto")
+    return data
 

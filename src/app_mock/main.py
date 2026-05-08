@@ -12,9 +12,11 @@ import yaml
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 _DEFAULT_JSON = _REPO_ROOT / "mocks" / "tickets" / "tickets_historico_mock.json"
 _DEFAULT_KB_DIR = _REPO_ROOT / "mocks" / "base_conhecimento"
+_DEFAULT_CRM_JSON = _REPO_ROOT / "mocks" / "crm" / "crm_mock.json"
 
 tickets = APIRouter(prefix="/tickets", tags=["tickets"])
 kb = APIRouter(prefix="/kb", tags=["kb"])
+crm = APIRouter(prefix="/crm", tags=["crm"])
 
 
 def _payload_path() -> Path:
@@ -22,6 +24,9 @@ def _payload_path() -> Path:
 
 def _kb_dir() -> Path:
     return Path(os.environ.get("KB_MOCK_DIR", str(_DEFAULT_KB_DIR)))
+
+def _crm_payload_path() -> Path:
+    return Path(os.environ.get("CRM_MOCK_JSON", str(_DEFAULT_CRM_JSON)))
 
 def _parse_frontmatter_markdown(text: str) -> tuple[dict, str]:
     if not text.startswith("---"):
@@ -151,6 +156,41 @@ def kb_create_doc(payload: dict = Body(...)) -> JSONResponse:
     )
 
 
+@crm.get("/health")
+def crm_health() -> dict[str, str]:
+    return {"status": "ok"}
+
+
+@crm.get("/clientes")
+def crm_get_cliente(nome: str = "") -> JSONResponse:
+    """Busca um cliente no CRM mock por nome (case-insensitive)."""
+    q = (nome or "").strip().lower()
+    if not q:
+        raise HTTPException(status_code=400, detail="Parâmetro obrigatório: nome")
+
+    p = _crm_payload_path()
+    if not p.is_file():
+        raise HTTPException(status_code=404, detail=f"Arquivo não encontrado: {p}")
+
+    raw = p.read_text(encoding="utf-8")
+    try:
+        data = json.loads(raw)
+    except json.JSONDecodeError as e:
+        raise HTTPException(status_code=500, detail=f"JSON inválido em {p}: {e}") from e
+    if not isinstance(data, list):
+        raise HTTPException(status_code=500, detail="O arquivo deve ser um JSON array na raiz")
+
+    for item in data:
+        if not isinstance(item, dict):
+            continue
+        nome_item = str(item.get("nome") or "").strip()
+        if nome_item.lower() == q:
+            return JSONResponse(content=item)
+
+    raise HTTPException(status_code=404, detail=f"Cliente não encontrado: {nome}")
+
+
 app = FastAPI(title="Tickets — mock API", version="0.1.0")
 app.include_router(tickets)
 app.include_router(kb)
+app.include_router(crm)

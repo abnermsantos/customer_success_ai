@@ -11,11 +11,20 @@ def _utc_now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def customer_id_from_name(nome_cliente: str) -> str:
+    """Gera um id_cliente determinístico para casos fora do CRM."""
+    cliente = (nome_cliente or "").strip()
+    if not cliente:
+        raise ValueError("nome do cliente não pode ser vazio")
+    slug = hashlib.sha256(cliente.lower().encode()).hexdigest()[:8].upper()
+    return f"CLI-{slug}"
+
+
 def ticket_from_client_input(nome_cliente: str, descricao: str) -> Ticket:
     """Monta um ticket mínimo a partir da entrada humana (nome + problema).
 
-    IDs são derivados de forma determinística/levemente aleatória; a triagem
-    deve preencher título adequado, ``tipo`` (categoria) e ``prioridade`` (via urgência).
+    O ``id_cliente`` é resolvido via CRM no workflow; se não existir na base,
+    o sistema pode gerar um id determinístico a partir do nome.
     """
     cliente = nome_cliente.strip()
     body = descricao.strip()
@@ -24,7 +33,6 @@ def ticket_from_client_input(nome_cliente: str, descricao: str) -> Ticket:
     if not body:
         raise ValueError("descrição do problema não pode ser vazia")
 
-    slug = hashlib.sha256(cliente.lower().encode()).hexdigest()[:8].upper()
     now = _utc_now_iso()
     preview = body.split("\n", 1)[0].strip()
     titulo_provisório = preview[:120] + ("…" if len(preview) > 120 else "")
@@ -36,7 +44,7 @@ def ticket_from_client_input(nome_cliente: str, descricao: str) -> Ticket:
         "status": "aberto",
         "prioridade": "indefinida",
         "responsavel": "",
-        "id_cliente": f"CLI-{slug}", # TODO: Alterar para o id do cliente real
+        "id_cliente": "",
         "nome_cliente": cliente,
         "criado_em": now,
         "atualizado_em": now,

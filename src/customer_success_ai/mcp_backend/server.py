@@ -15,8 +15,10 @@ import uvicorn
 import yaml
 
 from customer_success_ai.integrations.http_backend import create_kb_doc as http_create_kb_doc
+from customer_success_ai.integrations.http_backend import fetch_crm_customer_by_name as http_fetch_crm_customer_by_name
 from customer_success_ai.integrations.http_backend import fetch_kb_search as http_fetch_kb_search
 from customer_success_ai.integrations.http_backend import fetch_tickets_history as http_fetch_tickets_history
+from customer_success_ai.integrations.crm_api import clientes_url as crm_clientes_url
 from customer_success_ai.integrations.kb_api import create_doc_url as kb_create_doc_url
 from customer_success_ai.integrations.kb_api import normalize_api_base as normalize_kb_base
 from customer_success_ai.integrations.kb_api import search_url as kb_search_url
@@ -32,6 +34,8 @@ class McpBackendConfig:
     kb_api_base: str
     kb_search_url: str
     kb_create_url: str
+    crm_api_base: str
+    crm_clientes_url: str
 
 
 def _load_backend_config() -> McpBackendConfig:
@@ -57,6 +61,9 @@ def _load_backend_config() -> McpBackendConfig:
         u = urlparse(base)
         kb_base = f"{u.scheme}://{u.netloc}/kb"
 
+    u = urlparse(base)
+    crm_base = f"{u.scheme}://{u.netloc}/crm"
+
     return McpBackendConfig(
         tickets_api_base=base,
         tickets_historico_url=historico_url(base),
@@ -64,6 +71,8 @@ def _load_backend_config() -> McpBackendConfig:
         kb_api_base=kb_base,
         kb_search_url=kb_search_url(kb_base),
         kb_create_url=kb_create_doc_url(kb_base),
+        crm_api_base=crm_base,
+        crm_clientes_url=crm_clientes_url(crm_base),
     )
 
 
@@ -220,10 +229,19 @@ def build_mcp_server() -> FastMCP:
         out = http_create_kb_doc(cfg.kb_create_url, markdown=markdown, timeout=timeout)
         return out
 
+    # -------- crm.* --------
+    @mcp.tool(name="crm.get_customer_by_name")
+    def crm_get_customer_by_name(name: str, timeout: float = 30.0) -> dict[str, Any]:
+        """Busca o cliente no CRM (mock/real) pelo nome."""
+        cust = http_fetch_crm_customer_by_name(cfg.crm_clientes_url, name=name, timeout=timeout)
+        return {"found": cust is not None, "customer": cust}
+
     return mcp
 
 def normalize_base_for_parse(base: str) -> str:
     """Garante netloc parseável quando o usuário informa só path (evitar edge cases)."""
+    if not base:
+        base = "127.0.0.1:8005"
     b = base.strip().rstrip("/")
     if b.startswith(("http://", "https://")):
         return b

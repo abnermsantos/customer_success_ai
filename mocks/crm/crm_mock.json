@@ -1,0 +1,1507 @@
+[
+  {
+    "id_cliente": "CLI-001",
+    "nome": "Empresa Alpha Ltda",
+    "data_primeiro_contrato": "2020-09-18",
+    "inicio_contrato_vigente": "2021-12-20",
+    "fim_contrato_vigente": "2023-12-10"
+  },
+  {
+    "id_cliente": "CLI-002",
+    "nome": "Beta Soluções S.A.",
+    "data_primeiro_contrato": "2022-01-19",
+    "inicio_contrato_vigente": "2025-02-24",
+    "fim_contrato_vigente": "2026-02-19"
+  },
+  {
+    "id_cliente": "CLI-003",
+    "nome": "Gama Tecnologia",
+    "data_primeiro_contrato": "2023-11-20",
+    "inicio_contrato_vigente": "2025-11-19",
+    "fim_contrato_vigente": "2026-05-18"
+  },
+  {
+    "id_cliente": "CLI-004",
+    "nome": "Delta Comércio",
+    "data_primeiro_contrato": "2021-01-29",
+    "inicio_contrato_vigente": "2025-06-26",
+    "fim_contrato_vigente": "2027-06-16"
+  },
+  {
+    "id_cliente": "CLI-005",
+    "nome": "Epsilon Serviços",
+    "data_primeiro_contrato": "2020-08-29",
+    "inicio_contrato_vigente": "2023-12-03",
+    "fim_contrato_vigente": "2024-05-31"
+  },
+  {
+    "id_cliente": "CLI-006",
+    "nome": "Zeta Indústria",
+    "data_primeiro_contrato": "2020-10-12",
+    "inicio_contrato_vigente": "2023-08-18",
+    "fim_contrato_vigente": "2024-02-14"
+  },
+  {
+    "id_cliente": "CLI-007",
+    "nome": "Eta Consultoria",
+    "data_primeiro_contrato": "2018-01-16",
+    "inicio_contrato_vigente": "2020-03-29",
+    "fim_contrato_vigente": "2022-03-19"
+  },
+  {
+    "id_cliente": "CLI-008",
+    "nome": "Theta Logística",
+    "data_primeiro_contrato": "2020-04-23",
+    "inicio_contrato_vigente": "2024-02-11",
+    "fim_contrato_vigente": "2025-02-05"
+  },
+  {
+    "id_cliente": "CLI-009",
+    "nome": "Iota Financeira",
+    "data_primeiro_contrato": "2022-02-23",
+    "inicio_contrato_vigente": "2025-05-01",
+    "fim_contrato_vigente": "2025-10-28"
+  },
+  {
+    "id_cliente": "CLI-010",
+    "nome": "Kappa Saúde",
+    "data_primeiro_contrato": "2021-06-08",
+    "inicio_contrato_vigente": "2024-09-18",
+    "fim_contrato_vigente": "2025-09-13"
+  },
+  {
+    "id_cliente": "CLI-011",
+    "nome": "Lambda Educação",
+    "data_primeiro_contrato": "2019-07-03",
+    "inicio_contrato_vigente": "2022-03-20",
+    "fim_contrato_vigente": "2023-03-15"
+  },
+  {
+    "id_cliente": "CLI-012",
+    "nome": "Mu Varejo",
+    "data_primeiro_contrato": "2020-05-25",
+    "inicio_contrato_vigente": "2023-02-14",
+    "fim_contrato_vigente": "2025-02-03"
+  },
+  {
+    "id_cliente": "CLI-013",
+    "nome": "Nu Construção",
+    "data_primeiro_contrato": "2022-09-28",
+    "inicio_contrato_vigente": "2025-03-05",
+    "fim_contrato_vigente": "2027-02-23"
+  },
+  {
+    "id_cliente": "CLI-014",
+    "nome": "Xi Energia",
+    "data_primeiro_contrato": "2022-12-07",
+    "inicio_contrato_vigente": "2025-12-06",
+    "fim_contrato_vigente": "2026-12-01"
+  },
+  {
+    "id_cliente": "CLI-015",
+    "nome": "Omicron Telecom",
+    "data_primeiro_contrato": "2022-06-08",
+    "inicio_contrato_vigente": "2023-10-01",
+    "fim_contrato_vigente": "2024-03-29"
+  },
+  {
+    "id_cliente": "CLI-016",
+    "nome": "Sigma Serviços S.A.",
+    "data_primeiro_contrato": "2019-04-16",
+    "inicio_contrato_vigente": "2024-08-05",
+    "fim_contrato_vigente": "2026-07-26"
+  },
+  {
+    "id_cliente": "CLI-017",
+    "nome": "Omega Construção S/A",
+    "data_primeiro_contrato": "2022-02-22",
+    "inicio_contrato_vigente": "2024-02-25",
+    "fim_contrato_vigente": "2025-02-19"
+  },
+  {
+    "id_cliente": "CLI-018",
+    "nome": "Neo Empreendimentos Ltda",
+    "data_primeiro_contrato": "2019-10-02",
+    "inicio_contrato_vigente": "2025-03-09",
+    "fim_contrato_vigente": "2026-03-04"
+  },
+  {
+    "id_cliente": "CLI-019",
+    "nome": "Boa Comércio Group",
+    "data_primeiro_contrato": "2019-09-27",
+    "inicio_contrato_vigente": "2022-12-14",
+    "fim_contrato_vigente": "2024-12-03"
+  },
+  {
+    "id_cliente": "CLI-020",
+    "nome": "Epsilon Telecom ME",
+    "data_primeiro_contrato": "2022-03-06",
+    "inicio_contrato_vigente": "2025-06-09",
+    "fim_contrato_vigente": "2026-06-04"
+  },
+  {
+    "id_cliente": "CLI-021",
+    "nome": "Beta Agro ME",
+    "data_primeiro_contrato": "2021-07-08",
+    "inicio_contrato_vigente": "2025-03-18",
+    "fim_contrato_vigente": "2025-09-14"
+  },
+  {
+    "id_cliente": "CLI-022",
+    "nome": "Theta Sistemas & Cia",
+    "data_primeiro_contrato": "2019-04-13",
+    "inicio_contrato_vigente": "2022-07-01",
+    "fim_contrato_vigente": "2022-12-28"
+  },
+  {
+    "id_cliente": "CLI-023",
+    "nome": "Plus Indústria Group",
+    "data_primeiro_contrato": "2022-02-03",
+    "inicio_contrato_vigente": "2024-01-14",
+    "fim_contrato_vigente": "2024-07-12"
+  },
+  {
+    "id_cliente": "CLI-024",
+    "nome": "Porto Financeira EIRELI",
+    "data_primeiro_contrato": "2021-01-05",
+    "inicio_contrato_vigente": "2024-03-21",
+    "fim_contrato_vigente": "2025-03-16"
+  },
+  {
+    "id_cliente": "CLI-025",
+    "nome": "Vita Educação Group",
+    "data_primeiro_contrato": "2023-06-13",
+    "inicio_contrato_vigente": "2024-12-15",
+    "fim_contrato_vigente": "2025-12-10"
+  },
+  {
+    "id_cliente": "CLI-026",
+    "nome": "Oeste Consultoria Group",
+    "data_primeiro_contrato": "2019-10-22",
+    "inicio_contrato_vigente": "2023-07-19",
+    "fim_contrato_vigente": "2025-07-08"
+  },
+  {
+    "id_cliente": "CLI-027",
+    "nome": "Serra Logística & Cia",
+    "data_primeiro_contrato": "2021-12-26",
+    "inicio_contrato_vigente": "2025-04-01",
+    "fim_contrato_vigente": "2027-03-22"
+  },
+  {
+    "id_cliente": "CLI-028",
+    "nome": "Theta Distribuidora Ltda",
+    "data_primeiro_contrato": "2018-10-26",
+    "inicio_contrato_vigente": "2025-06-13",
+    "fim_contrato_vigente": "2026-06-08"
+  },
+  {
+    "id_cliente": "CLI-029",
+    "nome": "Epsilon Varejo & Cia",
+    "data_primeiro_contrato": "2021-12-14",
+    "inicio_contrato_vigente": "2024-06-19",
+    "fim_contrato_vigente": "2025-06-14"
+  },
+  {
+    "id_cliente": "CLI-030",
+    "nome": "Lambda Indústria ME",
+    "data_primeiro_contrato": "2020-10-14",
+    "inicio_contrato_vigente": "2025-03-14",
+    "fim_contrato_vigente": "2025-09-10"
+  },
+  {
+    "id_cliente": "CLI-031",
+    "nome": "Boa Distribuidora Ltda",
+    "data_primeiro_contrato": "2020-11-10",
+    "inicio_contrato_vigente": "2022-08-08",
+    "fim_contrato_vigente": "2023-08-03"
+  },
+  {
+    "id_cliente": "CLI-032",
+    "nome": "Sul Logística Group",
+    "data_primeiro_contrato": "2021-02-07",
+    "inicio_contrato_vigente": "2024-03-26",
+    "fim_contrato_vigente": "2025-03-21"
+  },
+  {
+    "id_cliente": "CLI-033",
+    "nome": "Sul Alimentos S/A",
+    "data_primeiro_contrato": "2022-01-06",
+    "inicio_contrato_vigente": "2024-11-27",
+    "fim_contrato_vigente": "2025-11-22"
+  },
+  {
+    "id_cliente": "CLI-034",
+    "nome": "Vita Varejo Brasil",
+    "data_primeiro_contrato": "2023-01-06",
+    "inicio_contrato_vigente": "2023-07-03",
+    "fim_contrato_vigente": "2025-06-22"
+  },
+  {
+    "id_cliente": "CLI-035",
+    "nome": "São Farmácia Brasil",
+    "data_primeiro_contrato": "2021-08-09",
+    "inicio_contrato_vigente": "2024-03-29",
+    "fim_contrato_vigente": "2025-03-24"
+  },
+  {
+    "id_cliente": "CLI-036",
+    "nome": "Eco Farmácia EIRELI",
+    "data_primeiro_contrato": "2018-10-11",
+    "inicio_contrato_vigente": "2023-07-14",
+    "fim_contrato_vigente": "2024-07-08"
+  },
+  {
+    "id_cliente": "CLI-037",
+    "nome": "São Energia Group",
+    "data_primeiro_contrato": "2023-05-29",
+    "inicio_contrato_vigente": "2025-05-30",
+    "fim_contrato_vigente": "2026-05-25"
+  },
+  {
+    "id_cliente": "CLI-038",
+    "nome": "Eta Empreendimentos Group",
+    "data_primeiro_contrato": "2019-01-14",
+    "inicio_contrato_vigente": "2023-06-14",
+    "fim_contrato_vigente": "2025-06-03"
+  },
+  {
+    "id_cliente": "CLI-039",
+    "nome": "Norte Telecom & Cia",
+    "data_primeiro_contrato": "2018-03-04",
+    "inicio_contrato_vigente": "2022-11-09",
+    "fim_contrato_vigente": "2023-05-08"
+  },
+  {
+    "id_cliente": "CLI-040",
+    "nome": "Vita Agro EIRELI",
+    "data_primeiro_contrato": "2019-03-02",
+    "inicio_contrato_vigente": "2025-06-08",
+    "fim_contrato_vigente": "2026-06-03"
+  },
+  {
+    "id_cliente": "CLI-041",
+    "nome": "Porto Serviços Brasil",
+    "data_primeiro_contrato": "2021-05-30",
+    "inicio_contrato_vigente": "2023-09-09",
+    "fim_contrato_vigente": "2025-08-29"
+  },
+  {
+    "id_cliente": "CLI-042",
+    "nome": "Vita Logística Ltda",
+    "data_primeiro_contrato": "2020-05-23",
+    "inicio_contrato_vigente": "2022-08-14",
+    "fim_contrato_vigente": "2024-08-03"
+  },
+  {
+    "id_cliente": "CLI-043",
+    "nome": "Eta Consultoria Brasil",
+    "data_primeiro_contrato": "2019-12-04",
+    "inicio_contrato_vigente": "2024-08-04",
+    "fim_contrato_vigente": "2026-07-25"
+  },
+  {
+    "id_cliente": "CLI-044",
+    "nome": "Sigma Serviços Group",
+    "data_primeiro_contrato": "2020-02-17",
+    "inicio_contrato_vigente": "2023-11-02",
+    "fim_contrato_vigente": "2025-10-22"
+  },
+  {
+    "id_cliente": "CLI-045",
+    "nome": "Leste Soluções S/A",
+    "data_primeiro_contrato": "2021-12-11",
+    "inicio_contrato_vigente": "2023-04-30",
+    "fim_contrato_vigente": "2024-04-24"
+  },
+  {
+    "id_cliente": "CLI-046",
+    "nome": "Norte Saúde Ltda",
+    "data_primeiro_contrato": "2023-09-04",
+    "inicio_contrato_vigente": "2025-09-03",
+    "fim_contrato_vigente": "2026-03-02"
+  },
+  {
+    "id_cliente": "CLI-047",
+    "nome": "Sigma Holding S/A",
+    "data_primeiro_contrato": "2018-01-09",
+    "inicio_contrato_vigente": "2022-07-13",
+    "fim_contrato_vigente": "2023-07-08"
+  },
+  {
+    "id_cliente": "CLI-048",
+    "nome": "Rio Engenharia ME",
+    "data_primeiro_contrato": "2019-03-20",
+    "inicio_contrato_vigente": "2023-08-04",
+    "fim_contrato_vigente": "2024-07-29"
+  },
+  {
+    "id_cliente": "CLI-049",
+    "nome": "Sol Serviços Ltda",
+    "data_primeiro_contrato": "2022-07-23",
+    "inicio_contrato_vigente": "2025-07-22",
+    "fim_contrato_vigente": "2026-07-17"
+  },
+  {
+    "id_cliente": "CLI-050",
+    "nome": "Pro Distribuidora Group",
+    "data_primeiro_contrato": "2022-02-24",
+    "inicio_contrato_vigente": "2022-12-30",
+    "fim_contrato_vigente": "2023-12-25"
+  },
+  {
+    "id_cliente": "CLI-051",
+    "nome": "Sol Educação S/A",
+    "data_primeiro_contrato": "2020-12-24",
+    "inicio_contrato_vigente": "2023-10-18",
+    "fim_contrato_vigente": "2024-10-12"
+  },
+  {
+    "id_cliente": "CLI-052",
+    "nome": "Leste Agro ME",
+    "data_primeiro_contrato": "2023-03-04",
+    "inicio_contrato_vigente": "2025-02-05",
+    "fim_contrato_vigente": "2025-08-04"
+  },
+  {
+    "id_cliente": "CLI-053",
+    "nome": "Kappa Assessoria Ltda",
+    "data_primeiro_contrato": "2019-10-07",
+    "inicio_contrato_vigente": "2025-02-26",
+    "fim_contrato_vigente": "2027-02-16"
+  },
+  {
+    "id_cliente": "CLI-054",
+    "nome": "Plus Consultoria EIRELI",
+    "data_primeiro_contrato": "2020-05-03",
+    "inicio_contrato_vigente": "2022-11-12",
+    "fim_contrato_vigente": "2023-11-07"
+  },
+  {
+    "id_cliente": "CLI-055",
+    "nome": "Oeste Consultoria & Cia",
+    "data_primeiro_contrato": "2018-12-08",
+    "inicio_contrato_vigente": "2021-05-29",
+    "fim_contrato_vigente": "2022-05-24"
+  },
+  {
+    "id_cliente": "CLI-056",
+    "nome": "Boa Agro Ltda",
+    "data_primeiro_contrato": "2021-10-19",
+    "inicio_contrato_vigente": "2024-10-30",
+    "fim_contrato_vigente": "2025-04-28"
+  },
+  {
+    "id_cliente": "CLI-057",
+    "nome": "Epsilon Engenharia ME",
+    "data_primeiro_contrato": "2021-01-04",
+    "inicio_contrato_vigente": "2023-01-04",
+    "fim_contrato_vigente": "2023-12-30"
+  },
+  {
+    "id_cliente": "CLI-058",
+    "nome": "Rio Logística & Cia",
+    "data_primeiro_contrato": "2019-05-31",
+    "inicio_contrato_vigente": "2021-11-01",
+    "fim_contrato_vigente": "2022-10-27"
+  },
+  {
+    "id_cliente": "CLI-059",
+    "nome": "Omega Varejo Ltda",
+    "data_primeiro_contrato": "2023-10-25",
+    "inicio_contrato_vigente": "2025-10-24",
+    "fim_contrato_vigente": "2026-10-19"
+  },
+  {
+    "id_cliente": "CLI-060",
+    "nome": "Alpha Consultoria EIRELI",
+    "data_primeiro_contrato": "2021-01-29",
+    "inicio_contrato_vigente": "2025-03-04",
+    "fim_contrato_vigente": "2025-08-31"
+  },
+  {
+    "id_cliente": "CLI-061",
+    "nome": "Eta Comércio EIRELI",
+    "data_primeiro_contrato": "2018-10-29",
+    "inicio_contrato_vigente": "2021-08-06",
+    "fim_contrato_vigente": "2022-08-01"
+  },
+  {
+    "id_cliente": "CLI-062",
+    "nome": "Vita Consultoria Group",
+    "data_primeiro_contrato": "2022-09-21",
+    "inicio_contrato_vigente": "2024-10-24",
+    "fim_contrato_vigente": "2026-10-14"
+  },
+  {
+    "id_cliente": "CLI-063",
+    "nome": "Beta Empreendimentos Ltda",
+    "data_primeiro_contrato": "2019-12-24",
+    "inicio_contrato_vigente": "2023-12-30",
+    "fim_contrato_vigente": "2024-06-27"
+  },
+  {
+    "id_cliente": "CLI-064",
+    "nome": "Beta Agro Group",
+    "data_primeiro_contrato": "2022-08-02",
+    "inicio_contrato_vigente": "2025-02-22",
+    "fim_contrato_vigente": "2027-02-12"
+  },
+  {
+    "id_cliente": "CLI-065",
+    "nome": "Norte Transportes & Cia",
+    "data_primeiro_contrato": "2019-06-15",
+    "inicio_contrato_vigente": "2022-01-25",
+    "fim_contrato_vigente": "2023-01-20"
+  },
+  {
+    "id_cliente": "CLI-066",
+    "nome": "Iota Alimentos EIRELI",
+    "data_primeiro_contrato": "2018-05-09",
+    "inicio_contrato_vigente": "2022-06-20",
+    "fim_contrato_vigente": "2024-06-09"
+  },
+  {
+    "id_cliente": "CLI-067",
+    "nome": "Prime Energia ME",
+    "data_primeiro_contrato": "2020-01-14",
+    "inicio_contrato_vigente": "2022-05-05",
+    "fim_contrato_vigente": "2024-04-24"
+  },
+  {
+    "id_cliente": "CLI-068",
+    "nome": "Tech Saúde S.A.",
+    "data_primeiro_contrato": "2021-07-21",
+    "inicio_contrato_vigente": "2025-02-08",
+    "fim_contrato_vigente": "2026-02-03"
+  },
+  {
+    "id_cliente": "CLI-069",
+    "nome": "Nova Digital EIRELI",
+    "data_primeiro_contrato": "2019-12-25",
+    "inicio_contrato_vigente": "2019-12-31",
+    "fim_contrato_vigente": "2020-06-28"
+  },
+  {
+    "id_cliente": "CLI-070",
+    "nome": "Oeste Serviços & Cia",
+    "data_primeiro_contrato": "2020-09-26",
+    "inicio_contrato_vigente": "2023-12-15",
+    "fim_contrato_vigente": "2025-12-04"
+  },
+  {
+    "id_cliente": "CLI-071",
+    "nome": "Vita Serviços Group",
+    "data_primeiro_contrato": "2022-08-24",
+    "inicio_contrato_vigente": "2022-09-05",
+    "fim_contrato_vigente": "2023-08-31"
+  },
+  {
+    "id_cliente": "CLI-072",
+    "nome": "Alpha Comércio S.A.",
+    "data_primeiro_contrato": "2019-06-06",
+    "inicio_contrato_vigente": "2022-10-29",
+    "fim_contrato_vigente": "2023-10-24"
+  },
+  {
+    "id_cliente": "CLI-073",
+    "nome": "Porto Energia & Cia",
+    "data_primeiro_contrato": "2019-10-25",
+    "inicio_contrato_vigente": "2020-01-27",
+    "fim_contrato_vigente": "2021-01-21"
+  },
+  {
+    "id_cliente": "CLI-074",
+    "nome": "Omega Tecnologia EIRELI",
+    "data_primeiro_contrato": "2020-11-06",
+    "inicio_contrato_vigente": "2025-02-11",
+    "fim_contrato_vigente": "2027-02-01"
+  },
+  {
+    "id_cliente": "CLI-075",
+    "nome": "São Sistemas EIRELI",
+    "data_primeiro_contrato": "2021-05-06",
+    "inicio_contrato_vigente": "2024-06-21",
+    "fim_contrato_vigente": "2025-06-16"
+  },
+  {
+    "id_cliente": "CLI-076",
+    "nome": "São Serviços ME",
+    "data_primeiro_contrato": "2023-04-05",
+    "inicio_contrato_vigente": "2023-10-15",
+    "fim_contrato_vigente": "2024-04-12"
+  },
+  {
+    "id_cliente": "CLI-077",
+    "nome": "Prime Tecnologia Ltda",
+    "data_primeiro_contrato": "2021-01-19",
+    "inicio_contrato_vigente": "2025-05-31",
+    "fim_contrato_vigente": "2026-05-26"
+  },
+  {
+    "id_cliente": "CLI-078",
+    "nome": "Santa Digital S.A.",
+    "data_primeiro_contrato": "2018-07-09",
+    "inicio_contrato_vigente": "2020-10-21",
+    "fim_contrato_vigente": "2021-04-19"
+  },
+  {
+    "id_cliente": "CLI-079",
+    "nome": "Kappa Soluções S/A",
+    "data_primeiro_contrato": "2020-04-19",
+    "inicio_contrato_vigente": "2025-02-04",
+    "fim_contrato_vigente": "2026-01-30"
+  },
+  {
+    "id_cliente": "CLI-080",
+    "nome": "Lambda Soluções Brasil",
+    "data_primeiro_contrato": "2019-05-23",
+    "inicio_contrato_vigente": "2023-09-05",
+    "fim_contrato_vigente": "2025-08-25"
+  },
+  {
+    "id_cliente": "CLI-081",
+    "nome": "Alpha Farmácia Group",
+    "data_primeiro_contrato": "2022-09-25",
+    "inicio_contrato_vigente": "2024-06-10",
+    "fim_contrato_vigente": "2025-06-05"
+  },
+  {
+    "id_cliente": "CLI-082",
+    "nome": "Theta Tecnologia Group",
+    "data_primeiro_contrato": "2019-07-21",
+    "inicio_contrato_vigente": "2021-02-28",
+    "fim_contrato_vigente": "2021-08-27"
+  },
+  {
+    "id_cliente": "CLI-083",
+    "nome": "Rio Sistemas Group",
+    "data_primeiro_contrato": "2023-10-24",
+    "inicio_contrato_vigente": "2025-10-23",
+    "fim_contrato_vigente": "2026-10-18"
+  },
+  {
+    "id_cliente": "CLI-084",
+    "nome": "Rio Alimentos S.A.",
+    "data_primeiro_contrato": "2018-12-31",
+    "inicio_contrato_vigente": "2023-12-30",
+    "fim_contrato_vigente": "2024-12-24"
+  },
+  {
+    "id_cliente": "CLI-085",
+    "nome": "Norte Holding Brasil",
+    "data_primeiro_contrato": "2022-06-03",
+    "inicio_contrato_vigente": "2024-08-17",
+    "fim_contrato_vigente": "2025-02-13"
+  },
+  {
+    "id_cliente": "CLI-086",
+    "nome": "Tech Construção EIRELI",
+    "data_primeiro_contrato": "2020-04-26",
+    "inicio_contrato_vigente": "2023-12-14",
+    "fim_contrato_vigente": "2024-12-08"
+  },
+  {
+    "id_cliente": "CLI-087",
+    "nome": "Prime Varejo EIRELI",
+    "data_primeiro_contrato": "2018-11-04",
+    "inicio_contrato_vigente": "2020-09-04",
+    "fim_contrato_vigente": "2021-03-03"
+  },
+  {
+    "id_cliente": "CLI-088",
+    "nome": "Kappa Engenharia Group",
+    "data_primeiro_contrato": "2020-02-06",
+    "inicio_contrato_vigente": "2025-01-20",
+    "fim_contrato_vigente": "2027-01-10"
+  },
+  {
+    "id_cliente": "CLI-089",
+    "nome": "Nova Financeira ME",
+    "data_primeiro_contrato": "2020-11-18",
+    "inicio_contrato_vigente": "2025-04-18",
+    "fim_contrato_vigente": "2026-04-13"
+  },
+  {
+    "id_cliente": "CLI-090",
+    "nome": "Norte Agro & Cia",
+    "data_primeiro_contrato": "2020-01-16",
+    "inicio_contrato_vigente": "2025-05-31",
+    "fim_contrato_vigente": "2026-05-26"
+  },
+  {
+    "id_cliente": "CLI-091",
+    "nome": "Max Farmácia & Cia",
+    "data_primeiro_contrato": "2022-11-19",
+    "inicio_contrato_vigente": "2025-04-09",
+    "fim_contrato_vigente": "2027-03-30"
+  },
+  {
+    "id_cliente": "CLI-092",
+    "nome": "Max Comércio S.A.",
+    "data_primeiro_contrato": "2018-04-29",
+    "inicio_contrato_vigente": "2020-12-19",
+    "fim_contrato_vigente": "2021-06-17"
+  },
+  {
+    "id_cliente": "CLI-093",
+    "nome": "Oeste Soluções Group",
+    "data_primeiro_contrato": "2020-01-20",
+    "inicio_contrato_vigente": "2022-12-10",
+    "fim_contrato_vigente": "2023-12-05"
+  },
+  {
+    "id_cliente": "CLI-094",
+    "nome": "Santa Indústria Brasil",
+    "data_primeiro_contrato": "2022-09-08",
+    "inicio_contrato_vigente": "2024-03-16",
+    "fim_contrato_vigente": "2025-03-11"
+  },
+  {
+    "id_cliente": "CLI-095",
+    "nome": "Max Indústria EIRELI",
+    "data_primeiro_contrato": "2023-04-12",
+    "inicio_contrato_vigente": "2023-12-04",
+    "fim_contrato_vigente": "2024-11-28"
+  },
+  {
+    "id_cliente": "CLI-096",
+    "nome": "Alpha Comércio Brasil",
+    "data_primeiro_contrato": "2023-08-02",
+    "inicio_contrato_vigente": "2025-04-09",
+    "fim_contrato_vigente": "2026-04-04"
+  },
+  {
+    "id_cliente": "CLI-097",
+    "nome": "Kappa Transportes S/A",
+    "data_primeiro_contrato": "2018-05-15",
+    "inicio_contrato_vigente": "2024-04-28",
+    "fim_contrato_vigente": "2024-10-25"
+  },
+  {
+    "id_cliente": "CLI-098",
+    "nome": "Porto Engenharia ME",
+    "data_primeiro_contrato": "2018-09-17",
+    "inicio_contrato_vigente": "2023-03-20",
+    "fim_contrato_vigente": "2025-03-09"
+  },
+  {
+    "id_cliente": "CLI-099",
+    "nome": "Porto Comércio EIRELI",
+    "data_primeiro_contrato": "2021-11-24",
+    "inicio_contrato_vigente": "2024-12-02",
+    "fim_contrato_vigente": "2025-11-27"
+  },
+  {
+    "id_cliente": "CLI-100",
+    "nome": "Serra Varejo EIRELI",
+    "data_primeiro_contrato": "2019-11-06",
+    "inicio_contrato_vigente": "2023-02-16",
+    "fim_contrato_vigente": "2024-02-11"
+  },
+  {
+    "id_cliente": "CLI-101",
+    "nome": "Gamma Farmácia EIRELI",
+    "data_primeiro_contrato": "2018-09-09",
+    "inicio_contrato_vigente": "2018-12-18",
+    "fim_contrato_vigente": "2019-12-13"
+  },
+  {
+    "id_cliente": "CLI-102",
+    "nome": "Sul Alimentos ME",
+    "data_primeiro_contrato": "2020-02-01",
+    "inicio_contrato_vigente": "2021-11-25",
+    "fim_contrato_vigente": "2022-11-20"
+  },
+  {
+    "id_cliente": "CLI-103",
+    "nome": "Iota Educação Ltda",
+    "data_primeiro_contrato": "2023-07-05",
+    "inicio_contrato_vigente": "2024-09-03",
+    "fim_contrato_vigente": "2026-08-24"
+  },
+  {
+    "id_cliente": "CLI-104",
+    "nome": "Sul Varejo EIRELI",
+    "data_primeiro_contrato": "2020-11-12",
+    "inicio_contrato_vigente": "2023-10-21",
+    "fim_contrato_vigente": "2025-10-10"
+  },
+  {
+    "id_cliente": "CLI-105",
+    "nome": "Eco Saúde Group",
+    "data_primeiro_contrato": "2019-02-08",
+    "inicio_contrato_vigente": "2022-10-27",
+    "fim_contrato_vigente": "2024-10-16"
+  },
+  {
+    "id_cliente": "CLI-106",
+    "nome": "Oeste Alimentos Ltda",
+    "data_primeiro_contrato": "2020-03-29",
+    "inicio_contrato_vigente": "2023-03-29",
+    "fim_contrato_vigente": "2024-03-23"
+  },
+  {
+    "id_cliente": "CLI-107",
+    "nome": "Oeste Energia S.A.",
+    "data_primeiro_contrato": "2018-01-11",
+    "inicio_contrato_vigente": "2020-11-30",
+    "fim_contrato_vigente": "2021-11-25"
+  },
+  {
+    "id_cliente": "CLI-108",
+    "nome": "Rio Tecnologia S.A.",
+    "data_primeiro_contrato": "2023-12-11",
+    "inicio_contrato_vigente": "2026-12-10",
+    "fim_contrato_vigente": "2027-12-05"
+  },
+  {
+    "id_cliente": "CLI-109",
+    "nome": "Lambda Indústria Group",
+    "data_primeiro_contrato": "2023-07-23",
+    "inicio_contrato_vigente": "2025-04-18",
+    "fim_contrato_vigente": "2026-04-13"
+  },
+  {
+    "id_cliente": "CLI-110",
+    "nome": "Pro Tecnologia Ltda",
+    "data_primeiro_contrato": "2021-12-01",
+    "inicio_contrato_vigente": "2024-03-15",
+    "fim_contrato_vigente": "2026-03-05"
+  },
+  {
+    "id_cliente": "CLI-111",
+    "nome": "Kappa Varejo Brasil",
+    "data_primeiro_contrato": "2018-09-24",
+    "inicio_contrato_vigente": "2024-02-20",
+    "fim_contrato_vigente": "2025-02-14"
+  },
+  {
+    "id_cliente": "CLI-112",
+    "nome": "Vita Saúde Ltda",
+    "data_primeiro_contrato": "2023-06-15",
+    "inicio_contrato_vigente": "2024-07-08",
+    "fim_contrato_vigente": "2026-06-28"
+  },
+  {
+    "id_cliente": "CLI-113",
+    "nome": "Oeste Soluções Brasil",
+    "data_primeiro_contrato": "2022-02-01",
+    "inicio_contrato_vigente": "2025-01-24",
+    "fim_contrato_vigente": "2026-01-19"
+  },
+  {
+    "id_cliente": "CLI-114",
+    "nome": "Omega Logística S.A.",
+    "data_primeiro_contrato": "2021-04-07",
+    "inicio_contrato_vigente": "2024-07-07",
+    "fim_contrato_vigente": "2025-07-02"
+  },
+  {
+    "id_cliente": "CLI-115",
+    "nome": "Tech Consultoria EIRELI",
+    "data_primeiro_contrato": "2020-08-24",
+    "inicio_contrato_vigente": "2023-02-19",
+    "fim_contrato_vigente": "2023-08-18"
+  },
+  {
+    "id_cliente": "CLI-116",
+    "nome": "Kappa Educação Group",
+    "data_primeiro_contrato": "2018-08-30",
+    "inicio_contrato_vigente": "2023-03-02",
+    "fim_contrato_vigente": "2024-02-25"
+  },
+  {
+    "id_cliente": "CLI-117",
+    "nome": "Boa Alimentos Ltda",
+    "data_primeiro_contrato": "2021-02-03",
+    "inicio_contrato_vigente": "2022-04-11",
+    "fim_contrato_vigente": "2024-03-31"
+  },
+  {
+    "id_cliente": "CLI-118",
+    "nome": "Santa Energia Group",
+    "data_primeiro_contrato": "2022-01-04",
+    "inicio_contrato_vigente": "2025-05-14",
+    "fim_contrato_vigente": "2026-05-09"
+  },
+  {
+    "id_cliente": "CLI-119",
+    "nome": "Eta Engenharia ME",
+    "data_primeiro_contrato": "2019-09-27",
+    "inicio_contrato_vigente": "2023-05-25",
+    "fim_contrato_vigente": "2024-05-19"
+  },
+  {
+    "id_cliente": "CLI-120",
+    "nome": "Zeta Indústria Ltda",
+    "data_primeiro_contrato": "2021-01-20",
+    "inicio_contrato_vigente": "2025-05-01",
+    "fim_contrato_vigente": "2026-04-26"
+  },
+  {
+    "id_cliente": "CLI-121",
+    "nome": "Epsilon Transportes EIRELI",
+    "data_primeiro_contrato": "2021-08-19",
+    "inicio_contrato_vigente": "2025-05-06",
+    "fim_contrato_vigente": "2027-04-26"
+  },
+  {
+    "id_cliente": "CLI-122",
+    "nome": "Zeta Saúde Brasil",
+    "data_primeiro_contrato": "2018-01-01",
+    "inicio_contrato_vigente": "2018-11-25",
+    "fim_contrato_vigente": "2020-11-14"
+  },
+  {
+    "id_cliente": "CLI-123",
+    "nome": "Sigma Transportes & Cia",
+    "data_primeiro_contrato": "2023-04-17",
+    "inicio_contrato_vigente": "2026-04-16",
+    "fim_contrato_vigente": "2027-04-11"
+  },
+  {
+    "id_cliente": "CLI-124",
+    "nome": "Vita Construção Group",
+    "data_primeiro_contrato": "2019-03-09",
+    "inicio_contrato_vigente": "2020-09-01",
+    "fim_contrato_vigente": "2021-02-28"
+  },
+  {
+    "id_cliente": "CLI-125",
+    "nome": "Sul Transportes Ltda",
+    "data_primeiro_contrato": "2021-12-22",
+    "inicio_contrato_vigente": "2023-11-23",
+    "fim_contrato_vigente": "2024-05-21"
+  },
+  {
+    "id_cliente": "CLI-126",
+    "nome": "Boa Sistemas ME",
+    "data_primeiro_contrato": "2021-08-04",
+    "inicio_contrato_vigente": "2024-05-29",
+    "fim_contrato_vigente": "2026-05-19"
+  },
+  {
+    "id_cliente": "CLI-127",
+    "nome": "Beta Varejo S/A",
+    "data_primeiro_contrato": "2023-10-18",
+    "inicio_contrato_vigente": "2025-10-17",
+    "fim_contrato_vigente": "2026-10-12"
+  },
+  {
+    "id_cliente": "CLI-128",
+    "nome": "Leste Tecnologia S/A",
+    "data_primeiro_contrato": "2023-07-12",
+    "inicio_contrato_vigente": "2025-07-11",
+    "fim_contrato_vigente": "2026-01-07"
+  },
+  {
+    "id_cliente": "CLI-129",
+    "nome": "Vita Distribuidora ME",
+    "data_primeiro_contrato": "2019-06-13",
+    "inicio_contrato_vigente": "2023-09-14",
+    "fim_contrato_vigente": "2024-09-08"
+  },
+  {
+    "id_cliente": "CLI-130",
+    "nome": "Lambda Logística S/A",
+    "data_primeiro_contrato": "2020-10-08",
+    "inicio_contrato_vigente": "2025-03-21",
+    "fim_contrato_vigente": "2027-03-11"
+  },
+  {
+    "id_cliente": "CLI-131",
+    "nome": "Iota Logística Brasil",
+    "data_primeiro_contrato": "2021-04-14",
+    "inicio_contrato_vigente": "2022-06-07",
+    "fim_contrato_vigente": "2023-06-02"
+  },
+  {
+    "id_cliente": "CLI-132",
+    "nome": "Omega Assessoria Brasil",
+    "data_primeiro_contrato": "2018-07-16",
+    "inicio_contrato_vigente": "2024-09-26",
+    "fim_contrato_vigente": "2025-09-21"
+  },
+  {
+    "id_cliente": "CLI-133",
+    "nome": "Alpha Varejo Brasil",
+    "data_primeiro_contrato": "2022-09-30",
+    "inicio_contrato_vigente": "2025-09-29",
+    "fim_contrato_vigente": "2026-09-24"
+  },
+  {
+    "id_cliente": "CLI-134",
+    "nome": "Kappa Agro Group",
+    "data_primeiro_contrato": "2021-04-05",
+    "inicio_contrato_vigente": "2023-09-04",
+    "fim_contrato_vigente": "2024-03-02"
+  },
+  {
+    "id_cliente": "CLI-135",
+    "nome": "Neo Serviços Brasil",
+    "data_primeiro_contrato": "2023-04-06",
+    "inicio_contrato_vigente": "2023-07-21",
+    "fim_contrato_vigente": "2025-07-10"
+  },
+  {
+    "id_cliente": "CLI-136",
+    "nome": "Zeta Digital Ltda",
+    "data_primeiro_contrato": "2021-11-21",
+    "inicio_contrato_vigente": "2024-12-29",
+    "fim_contrato_vigente": "2025-12-24"
+  },
+  {
+    "id_cliente": "CLI-137",
+    "nome": "Sigma Tecnologia Brasil",
+    "data_primeiro_contrato": "2023-01-17",
+    "inicio_contrato_vigente": "2026-01-16",
+    "fim_contrato_vigente": "2027-01-11"
+  },
+  {
+    "id_cliente": "CLI-138",
+    "nome": "Beta Engenharia Group",
+    "data_primeiro_contrato": "2021-06-14",
+    "inicio_contrato_vigente": "2024-03-06",
+    "fim_contrato_vigente": "2026-02-24"
+  },
+  {
+    "id_cliente": "CLI-139",
+    "nome": "Prime Financeira ME",
+    "data_primeiro_contrato": "2022-06-07",
+    "inicio_contrato_vigente": "2025-06-16",
+    "fim_contrato_vigente": "2027-06-06"
+  },
+  {
+    "id_cliente": "CLI-140",
+    "nome": "Leste Educação Ltda",
+    "data_primeiro_contrato": "2023-09-11",
+    "inicio_contrato_vigente": "2025-02-19",
+    "fim_contrato_vigente": "2026-02-14"
+  },
+  {
+    "id_cliente": "CLI-141",
+    "nome": "Lambda Assessoria EIRELI",
+    "data_primeiro_contrato": "2018-03-06",
+    "inicio_contrato_vigente": "2024-02-28",
+    "fim_contrato_vigente": "2024-08-26"
+  },
+  {
+    "id_cliente": "CLI-142",
+    "nome": "Sigma Varejo ME",
+    "data_primeiro_contrato": "2019-05-03",
+    "inicio_contrato_vigente": "2020-11-29",
+    "fim_contrato_vigente": "2021-05-28"
+  },
+  {
+    "id_cliente": "CLI-143",
+    "nome": "Sol Agro Brasil",
+    "data_primeiro_contrato": "2023-01-16",
+    "inicio_contrato_vigente": "2025-01-23",
+    "fim_contrato_vigente": "2026-01-18"
+  },
+  {
+    "id_cliente": "CLI-144",
+    "nome": "Serra Tecnologia & Cia",
+    "data_primeiro_contrato": "2018-03-28",
+    "inicio_contrato_vigente": "2023-09-28",
+    "fim_contrato_vigente": "2024-09-22"
+  },
+  {
+    "id_cliente": "CLI-145",
+    "nome": "Tech Tecnologia EIRELI",
+    "data_primeiro_contrato": "2023-08-26",
+    "inicio_contrato_vigente": "2026-08-25",
+    "fim_contrato_vigente": "2027-08-20"
+  },
+  {
+    "id_cliente": "CLI-146",
+    "nome": "Zeta Digital S/A",
+    "data_primeiro_contrato": "2019-07-24",
+    "inicio_contrato_vigente": "2024-11-10",
+    "fim_contrato_vigente": "2025-11-05"
+  },
+  {
+    "id_cliente": "CLI-147",
+    "nome": "Boa Distribuidora EIRELI",
+    "data_primeiro_contrato": "2023-10-12",
+    "inicio_contrato_vigente": "2025-10-11",
+    "fim_contrato_vigente": "2026-04-09"
+  },
+  {
+    "id_cliente": "CLI-148",
+    "nome": "Pro Comércio Brasil",
+    "data_primeiro_contrato": "2020-08-10",
+    "inicio_contrato_vigente": "2023-08-19",
+    "fim_contrato_vigente": "2024-08-13"
+  },
+  {
+    "id_cliente": "CLI-149",
+    "nome": "Eta Energia Brasil",
+    "data_primeiro_contrato": "2020-10-03",
+    "inicio_contrato_vigente": "2024-01-29",
+    "fim_contrato_vigente": "2025-01-23"
+  },
+  {
+    "id_cliente": "CLI-150",
+    "nome": "Porto Tecnologia EIRELI",
+    "data_primeiro_contrato": "2023-04-01",
+    "inicio_contrato_vigente": "2025-03-24",
+    "fim_contrato_vigente": "2026-03-19"
+  },
+  {
+    "id_cliente": "CLI-151",
+    "nome": "Eco Serviços EIRELI",
+    "data_primeiro_contrato": "2020-07-26",
+    "inicio_contrato_vigente": "2023-05-02",
+    "fim_contrato_vigente": "2024-04-26"
+  },
+  {
+    "id_cliente": "CLI-152",
+    "nome": "Gamma Holding EIRELI",
+    "data_primeiro_contrato": "2023-10-03",
+    "inicio_contrato_vigente": "2025-03-07",
+    "fim_contrato_vigente": "2025-09-03"
+  },
+  {
+    "id_cliente": "CLI-153",
+    "nome": "Tech Logística ME",
+    "data_primeiro_contrato": "2023-02-20",
+    "inicio_contrato_vigente": "2024-06-08",
+    "fim_contrato_vigente": "2025-06-03"
+  },
+  {
+    "id_cliente": "CLI-154",
+    "nome": "Vita Holding EIRELI",
+    "data_primeiro_contrato": "2021-03-10",
+    "inicio_contrato_vigente": "2024-01-19",
+    "fim_contrato_vigente": "2025-01-13"
+  },
+  {
+    "id_cliente": "CLI-155",
+    "nome": "Prime Distribuidora EIRELI",
+    "data_primeiro_contrato": "2021-01-25",
+    "inicio_contrato_vigente": "2025-02-05",
+    "fim_contrato_vigente": "2026-01-31"
+  },
+  {
+    "id_cliente": "CLI-156",
+    "nome": "São Varejo Ltda",
+    "data_primeiro_contrato": "2018-03-22",
+    "inicio_contrato_vigente": "2018-07-26",
+    "fim_contrato_vigente": "2019-07-21"
+  },
+  {
+    "id_cliente": "CLI-157",
+    "nome": "Gamma Transportes ME",
+    "data_primeiro_contrato": "2023-08-23",
+    "inicio_contrato_vigente": "2025-05-30",
+    "fim_contrato_vigente": "2026-05-25"
+  },
+  {
+    "id_cliente": "CLI-158",
+    "nome": "Vita Saúde ME",
+    "data_primeiro_contrato": "2019-07-20",
+    "inicio_contrato_vigente": "2019-12-28",
+    "fim_contrato_vigente": "2021-12-17"
+  },
+  {
+    "id_cliente": "CLI-159",
+    "nome": "Neo Telecom S.A.",
+    "data_primeiro_contrato": "2019-10-25",
+    "inicio_contrato_vigente": "2024-11-19",
+    "fim_contrato_vigente": "2026-11-09"
+  },
+  {
+    "id_cliente": "CLI-160",
+    "nome": "Boa Tecnologia ME",
+    "data_primeiro_contrato": "2023-03-15",
+    "inicio_contrato_vigente": "2025-01-20",
+    "fim_contrato_vigente": "2027-01-10"
+  },
+  {
+    "id_cliente": "CLI-161",
+    "nome": "Beta Educação Brasil",
+    "data_primeiro_contrato": "2019-09-28",
+    "inicio_contrato_vigente": "2023-04-29",
+    "fim_contrato_vigente": "2023-10-26"
+  },
+  {
+    "id_cliente": "CLI-162",
+    "nome": "Pro Transportes & Cia",
+    "data_primeiro_contrato": "2022-01-24",
+    "inicio_contrato_vigente": "2024-06-28",
+    "fim_contrato_vigente": "2024-12-25"
+  },
+  {
+    "id_cliente": "CLI-163",
+    "nome": "Eco Agro Group",
+    "data_primeiro_contrato": "2018-01-05",
+    "inicio_contrato_vigente": "2024-03-28",
+    "fim_contrato_vigente": "2024-09-24"
+  },
+  {
+    "id_cliente": "CLI-164",
+    "nome": "Norte Soluções & Cia",
+    "data_primeiro_contrato": "2022-02-16",
+    "inicio_contrato_vigente": "2023-07-30",
+    "fim_contrato_vigente": "2024-01-26"
+  },
+  {
+    "id_cliente": "CLI-165",
+    "nome": "Eta Farmácia & Cia",
+    "data_primeiro_contrato": "2020-11-22",
+    "inicio_contrato_vigente": "2021-03-14",
+    "fim_contrato_vigente": "2021-09-10"
+  },
+  {
+    "id_cliente": "CLI-166",
+    "nome": "Epsilon Construção Ltda",
+    "data_primeiro_contrato": "2022-08-05",
+    "inicio_contrato_vigente": "2023-09-06",
+    "fim_contrato_vigente": "2024-03-04"
+  },
+  {
+    "id_cliente": "CLI-167",
+    "nome": "Iota Logística & Cia",
+    "data_primeiro_contrato": "2022-03-18",
+    "inicio_contrato_vigente": "2023-08-03",
+    "fim_contrato_vigente": "2025-07-23"
+  },
+  {
+    "id_cliente": "CLI-168",
+    "nome": "Oeste Energia EIRELI",
+    "data_primeiro_contrato": "2023-08-04",
+    "inicio_contrato_vigente": "2026-08-03",
+    "fim_contrato_vigente": "2028-07-23"
+  },
+  {
+    "id_cliente": "CLI-169",
+    "nome": "Neo Engenharia Brasil",
+    "data_primeiro_contrato": "2020-04-08",
+    "inicio_contrato_vigente": "2024-05-11",
+    "fim_contrato_vigente": "2025-05-06"
+  },
+  {
+    "id_cliente": "CLI-170",
+    "nome": "Iota Empreendimentos & Cia",
+    "data_primeiro_contrato": "2018-01-25",
+    "inicio_contrato_vigente": "2023-06-24",
+    "fim_contrato_vigente": "2025-06-13"
+  },
+  {
+    "id_cliente": "CLI-171",
+    "nome": "Gamma Sistemas EIRELI",
+    "data_primeiro_contrato": "2023-01-18",
+    "inicio_contrato_vigente": "2026-01-17",
+    "fim_contrato_vigente": "2027-01-12"
+  },
+  {
+    "id_cliente": "CLI-172",
+    "nome": "Theta Financeira Brasil",
+    "data_primeiro_contrato": "2022-01-01",
+    "inicio_contrato_vigente": "2025-04-09",
+    "fim_contrato_vigente": "2027-03-30"
+  },
+  {
+    "id_cliente": "CLI-173",
+    "nome": "Delta Indústria S/A",
+    "data_primeiro_contrato": "2023-02-19",
+    "inicio_contrato_vigente": "2025-06-29",
+    "fim_contrato_vigente": "2026-06-24"
+  },
+  {
+    "id_cliente": "CLI-174",
+    "nome": "Sul Educação ME",
+    "data_primeiro_contrato": "2020-02-01",
+    "inicio_contrato_vigente": "2024-06-16",
+    "fim_contrato_vigente": "2025-06-11"
+  },
+  {
+    "id_cliente": "CLI-175",
+    "nome": "Theta Farmácia & Cia",
+    "data_primeiro_contrato": "2020-10-05",
+    "inicio_contrato_vigente": "2023-04-11",
+    "fim_contrato_vigente": "2024-04-05"
+  },
+  {
+    "id_cliente": "CLI-176",
+    "nome": "Kappa Construção Ltda",
+    "data_primeiro_contrato": "2023-04-23",
+    "inicio_contrato_vigente": "2024-09-27",
+    "fim_contrato_vigente": "2026-09-17"
+  },
+  {
+    "id_cliente": "CLI-177",
+    "nome": "Oeste Telecom EIRELI",
+    "data_primeiro_contrato": "2022-08-16",
+    "inicio_contrato_vigente": "2024-09-05",
+    "fim_contrato_vigente": "2025-03-04"
+  },
+  {
+    "id_cliente": "CLI-178",
+    "nome": "Prime Educação S/A",
+    "data_primeiro_contrato": "2019-06-09",
+    "inicio_contrato_vigente": "2023-08-03",
+    "fim_contrato_vigente": "2025-07-23"
+  },
+  {
+    "id_cliente": "CLI-179",
+    "nome": "Prime Financeira S/A",
+    "data_primeiro_contrato": "2023-08-07",
+    "inicio_contrato_vigente": "2024-05-17",
+    "fim_contrato_vigente": "2026-05-07"
+  },
+  {
+    "id_cliente": "CLI-180",
+    "nome": "Epsilon Agro EIRELI",
+    "data_primeiro_contrato": "2023-04-21",
+    "inicio_contrato_vigente": "2023-11-13",
+    "fim_contrato_vigente": "2025-11-02"
+  },
+  {
+    "id_cliente": "CLI-181",
+    "nome": "Vita Farmácia S/A",
+    "data_primeiro_contrato": "2018-08-14",
+    "inicio_contrato_vigente": "2022-07-08",
+    "fim_contrato_vigente": "2023-07-03"
+  },
+  {
+    "id_cliente": "CLI-182",
+    "nome": "Delta Assessoria EIRELI",
+    "data_primeiro_contrato": "2020-03-13",
+    "inicio_contrato_vigente": "2024-01-18",
+    "fim_contrato_vigente": "2025-01-12"
+  },
+  {
+    "id_cliente": "CLI-183",
+    "nome": "Leste Holding ME",
+    "data_primeiro_contrato": "2021-01-10",
+    "inicio_contrato_vigente": "2024-04-10",
+    "fim_contrato_vigente": "2026-03-31"
+  },
+  {
+    "id_cliente": "CLI-184",
+    "nome": "Porto Soluções S.A.",
+    "data_primeiro_contrato": "2020-10-29",
+    "inicio_contrato_vigente": "2024-09-30",
+    "fim_contrato_vigente": "2025-09-25"
+  },
+  {
+    "id_cliente": "CLI-185",
+    "nome": "Porto Transportes EIRELI",
+    "data_primeiro_contrato": "2019-12-19",
+    "inicio_contrato_vigente": "2023-07-24",
+    "fim_contrato_vigente": "2024-01-20"
+  },
+  {
+    "id_cliente": "CLI-186",
+    "nome": "Max Construção ME",
+    "data_primeiro_contrato": "2019-06-10",
+    "inicio_contrato_vigente": "2023-07-31",
+    "fim_contrato_vigente": "2024-01-27"
+  },
+  {
+    "id_cliente": "CLI-187",
+    "nome": "Santa Telecom Brasil",
+    "data_primeiro_contrato": "2019-05-16",
+    "inicio_contrato_vigente": "2021-06-26",
+    "fim_contrato_vigente": "2022-06-21"
+  },
+  {
+    "id_cliente": "CLI-188",
+    "nome": "Pro Empreendimentos Group",
+    "data_primeiro_contrato": "2022-05-20",
+    "inicio_contrato_vigente": "2022-06-14",
+    "fim_contrato_vigente": "2024-06-03"
+  },
+  {
+    "id_cliente": "CLI-189",
+    "nome": "Rio Telecom S.A.",
+    "data_primeiro_contrato": "2020-06-17",
+    "inicio_contrato_vigente": "2022-05-27",
+    "fim_contrato_vigente": "2023-05-22"
+  },
+  {
+    "id_cliente": "CLI-190",
+    "nome": "Eco Saúde Ltda",
+    "data_primeiro_contrato": "2020-08-18",
+    "inicio_contrato_vigente": "2024-06-28",
+    "fim_contrato_vigente": "2025-06-23"
+  },
+  {
+    "id_cliente": "CLI-191",
+    "nome": "Plus Sistemas Brasil",
+    "data_primeiro_contrato": "2021-05-14",
+    "inicio_contrato_vigente": "2023-07-26",
+    "fim_contrato_vigente": "2024-07-20"
+  },
+  {
+    "id_cliente": "CLI-192",
+    "nome": "Prime Farmácia S.A.",
+    "data_primeiro_contrato": "2020-07-14",
+    "inicio_contrato_vigente": "2022-04-16",
+    "fim_contrato_vigente": "2024-04-05"
+  },
+  {
+    "id_cliente": "CLI-193",
+    "nome": "Boa Alimentos Brasil",
+    "data_primeiro_contrato": "2018-05-04",
+    "inicio_contrato_vigente": "2019-09-19",
+    "fim_contrato_vigente": "2020-09-13"
+  },
+  {
+    "id_cliente": "CLI-194",
+    "nome": "Lambda Consultoria S.A.",
+    "data_primeiro_contrato": "2022-01-07",
+    "inicio_contrato_vigente": "2025-05-23",
+    "fim_contrato_vigente": "2027-05-13"
+  },
+  {
+    "id_cliente": "CLI-195",
+    "nome": "São Transportes S.A.",
+    "data_primeiro_contrato": "2018-11-02",
+    "inicio_contrato_vigente": "2019-12-16",
+    "fim_contrato_vigente": "2020-12-10"
+  },
+  {
+    "id_cliente": "CLI-196",
+    "nome": "Eta Tecnologia S/A",
+    "data_primeiro_contrato": "2022-10-26",
+    "inicio_contrato_vigente": "2025-04-01",
+    "fim_contrato_vigente": "2027-03-22"
+  },
+  {
+    "id_cliente": "CLI-197",
+    "nome": "Santa Comércio ME",
+    "data_primeiro_contrato": "2021-10-17",
+    "inicio_contrato_vigente": "2022-01-23",
+    "fim_contrato_vigente": "2023-01-18"
+  },
+  {
+    "id_cliente": "CLI-198",
+    "nome": "Eco Farmácia & Cia",
+    "data_primeiro_contrato": "2022-12-21",
+    "inicio_contrato_vigente": "2025-12-20",
+    "fim_contrato_vigente": "2026-06-18"
+  },
+  {
+    "id_cliente": "CLI-199",
+    "nome": "Sol Comércio Brasil",
+    "data_primeiro_contrato": "2018-02-02",
+    "inicio_contrato_vigente": "2020-11-01",
+    "fim_contrato_vigente": "2021-10-27"
+  },
+  {
+    "id_cliente": "CLI-200",
+    "nome": "Iota Telecom Group",
+    "data_primeiro_contrato": "2018-07-30",
+    "inicio_contrato_vigente": "2022-01-21",
+    "fim_contrato_vigente": "2023-01-16"
+  },
+  {
+    "id_cliente": "CLI-201",
+    "nome": "Boa Tecnologia Brasil",
+    "data_primeiro_contrato": "2020-01-26",
+    "inicio_contrato_vigente": "2023-06-15",
+    "fim_contrato_vigente": "2025-06-04"
+  },
+  {
+    "id_cliente": "CLI-202",
+    "nome": "Prime Indústria S/A",
+    "data_primeiro_contrato": "2019-05-12",
+    "inicio_contrato_vigente": "2024-06-29",
+    "fim_contrato_vigente": "2025-06-24"
+  },
+  {
+    "id_cliente": "CLI-203",
+    "nome": "Neo Transportes EIRELI",
+    "data_primeiro_contrato": "2020-08-03",
+    "inicio_contrato_vigente": "2021-06-14",
+    "fim_contrato_vigente": "2021-12-11"
+  },
+  {
+    "id_cliente": "CLI-204",
+    "nome": "Epsilon Digital & Cia",
+    "data_primeiro_contrato": "2022-05-11",
+    "inicio_contrato_vigente": "2025-06-17",
+    "fim_contrato_vigente": "2027-06-07"
+  },
+  {
+    "id_cliente": "CLI-205",
+    "nome": "Eco Tecnologia & Cia",
+    "data_primeiro_contrato": "2020-10-22",
+    "inicio_contrato_vigente": "2023-11-21",
+    "fim_contrato_vigente": "2024-11-15"
+  },
+  {
+    "id_cliente": "CLI-206",
+    "nome": "Serra Logística EIRELI",
+    "data_primeiro_contrato": "2018-11-03",
+    "inicio_contrato_vigente": "2022-06-14",
+    "fim_contrato_vigente": "2023-06-09"
+  },
+  {
+    "id_cliente": "CLI-207",
+    "nome": "Plus Educação & Cia",
+    "data_primeiro_contrato": "2020-03-27",
+    "inicio_contrato_vigente": "2024-12-12",
+    "fim_contrato_vigente": "2026-12-02"
+  },
+  {
+    "id_cliente": "CLI-208",
+    "nome": "Prime Logística Group",
+    "data_primeiro_contrato": "2023-03-14",
+    "inicio_contrato_vigente": "2025-05-01",
+    "fim_contrato_vigente": "2026-04-26"
+  },
+  {
+    "id_cliente": "CLI-209",
+    "nome": "Epsilon Transportes ME",
+    "data_primeiro_contrato": "2021-11-18",
+    "inicio_contrato_vigente": "2022-12-09",
+    "fim_contrato_vigente": "2023-06-07"
+  },
+  {
+    "id_cliente": "CLI-210",
+    "nome": "Neo Sistemas Brasil",
+    "data_primeiro_contrato": "2019-10-20",
+    "inicio_contrato_vigente": "2024-08-07",
+    "fim_contrato_vigente": "2025-08-02"
+  },
+  {
+    "id_cliente": "CLI-211",
+    "nome": "Zeta Telecom S/A",
+    "data_primeiro_contrato": "2022-01-22",
+    "inicio_contrato_vigente": "2024-04-17",
+    "fim_contrato_vigente": "2026-04-07"
+  },
+  {
+    "id_cliente": "CLI-212",
+    "nome": "Max Sistemas Ltda",
+    "data_primeiro_contrato": "2018-12-09",
+    "inicio_contrato_vigente": "2024-06-23",
+    "fim_contrato_vigente": "2025-06-18"
+  },
+  {
+    "id_cliente": "CLI-213",
+    "nome": "Vita Digital Ltda",
+    "data_primeiro_contrato": "2020-12-30",
+    "inicio_contrato_vigente": "2023-11-10",
+    "fim_contrato_vigente": "2024-11-04"
+  },
+  {
+    "id_cliente": "CLI-214",
+    "nome": "Pro Financeira ME",
+    "data_primeiro_contrato": "2019-08-01",
+    "inicio_contrato_vigente": "2021-08-26",
+    "fim_contrato_vigente": "2022-08-21"
+  },
+  {
+    "id_cliente": "CLI-215",
+    "nome": "Iota Engenharia Ltda",
+    "data_primeiro_contrato": "2023-09-24",
+    "inicio_contrato_vigente": "2026-09-23",
+    "fim_contrato_vigente": "2027-09-18"
+  }
+]

@@ -81,6 +81,16 @@ def fetch_tickets_history(url: str, *, timeout: float = 60.0) -> list[dict[str, 
     return [x for x in tickets if isinstance(x, dict)]
 
 
+def fetch_crm_customer_by_name(name: str, *, timeout: float = 30.0) -> dict[str, Any] | None:
+    """Busca no CRM via MCP. Retorna dict do cliente ou None se não encontrado."""
+    data = mcp_call_tool("crm.get_customer_by_name", {"name": str(name or ""), "timeout": float(timeout)})
+    if not isinstance(data, dict):
+        raise ValueError("CRM (via MCP): resposta deve ser um objeto JSON")
+    if data.get("found") is True and isinstance(data.get("customer"), dict):
+        return data["customer"]
+    return None
+
+
 def tickets_historico_loader(historico_url: str) -> Callable[[], list[dict[str, Any]]]:
     u = historico_url.strip()
 
