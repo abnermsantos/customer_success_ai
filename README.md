@@ -79,9 +79,9 @@ flowchart TB
      Justification:::justification
     classDef worker fill:#f0f7ff,stroke:#0077b6,color:#444
     classDef hil fill:#fffef0,stroke:#d4a017,color:#444,stroke-width:3px
-    classDef alert fill:#fff1f0,stroke:#cf1322,color:#444,stroke-dasharray: 5 5
-    classDef spec fill:#ccddaa,stroke:#444,font-size:11px
-    classDef justification fill:#ccddaa,stroke:#444,stroke-width:2px,font-size:12px
+    classDef alert fill:#f0f7ff,stroke:#cf1322,color:#444,stroke-dasharray: 5 5
+    classDef spec fill:#f0f7ff,stroke:#444,font-size:11px
+    classDef justification fill:#f0f7ff,stroke:#444,stroke-width:2px,font-size:12px
 ```
 
 1. **CLI** (`src/customer_success_ai/cli.py`): carrega configuração, orquestra (opcionalmente) o **mock HTTP** e o **servidor MCP**, depois invoca o grafo LangGraph.
